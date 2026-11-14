@@ -49,12 +49,18 @@ def draw(stage: int) -> Sprite:
     sp = Sprite()
     forest_ground(sp, w=(12 if stage >= 4 else 8 if stage <= 2 else 10))
     if stage == 1:
-        leaf(sp, [(15, 28), (15, 24), (17, 20)], 1.6)
-        leaf(sp, [(16, 28), (17, 25), (19, 23)], 1.2)
+        # zwei breite Blättchen auf dünnen Stielen, seitlich abstehend (V-Form)
+        stalk_line(sp, [(15, 28), (14, 27), (13, 25)])
+        leaf(sp, [(13, 25), (11, 22), (8, 19)], 1.6)
+        stalk_line(sp, [(17, 28), (18, 27), (19, 25)])
+        leaf(sp, [(19, 25), (21, 22), (24, 19)], 1.6)
     elif stage == 2:
-        leaf(sp, [(14, 28), (12, 23), (9, 19)], 2.0)
-        leaf(sp, [(16, 28), (17, 22), (20, 17)], 2.2)
-        leaf(sp, [(16, 28), (19, 26), (22, 25)], 1.6)
+        stalk_line(sp, [(15, 28), (14, 26), (12, 23)])
+        leaf(sp, [(12, 23), (10, 21), (6, 21)], 2.1)
+        stalk_line(sp, [(17, 28), (18, 26), (20, 23)])
+        leaf(sp, [(20, 23), (22, 21), (26, 21)], 2.1)
+        stalk_line(sp, [(16, 28), (16, 26), (16, 24)])
+        leaf(sp, [(16, 24), (16, 21), (17, 17)], 2.0)
     elif stage == 3:
         leaf_back(sp, [(15, 28), (13, 20), (13, 13)], 2.5)
         leaf(sp, [(13, 28), (8, 21), (3, 21)], 2.4)

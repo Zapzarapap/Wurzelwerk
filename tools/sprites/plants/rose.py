@@ -59,19 +59,19 @@ SEPALS = ["l.b.b",
           ".lbs."]
 
 
-def leaflet(sp, x, y, ang, L):
-    heart_leaf(sp.layer("bw_roseleaf"), x, y, ang, L, L * 0.45, notch=False, midrib=L >= 4, vein=SHADE)
+def leaflet(sp, x, y, ang, L, ramp="bw_roseleaf"):
+    heart_leaf(sp.layer(ramp), x, y, ang, L, L * 0.45, notch=False, midrib=L >= 4, vein=SHADE)
 
 
-def leaf_group(sp, x, y, ang, s=1.0):
+def leaf_group(sp, x, y, ang, s=1.0, ramp="bw_roseleaf"):
     """Gefiedertes Rosenblatt: Stiel mit Endblättchen und zwei Seitenblättchen."""
     a = math.radians(ang)
     ex, ey = x + math.cos(a) * 4.5 * s, y + math.sin(a) * 4.5 * s
-    stalk(sp, x, y, ex, ey, ramp="bw_roseleaf")
+    stalk(sp, x, y, ex, ey, ramp=ramp)
     mx, my = x + math.cos(a) * 2.2 * s, y + math.sin(a) * 2.2 * s
-    leaflet(sp, mx, my, ang - 65, 3.2 * s)
-    leaflet(sp, mx, my, ang + 65, 3.2 * s)
-    leaflet(sp, ex - math.cos(a), ey - math.sin(a), ang, 4.2 * s)
+    leaflet(sp, mx, my, ang - 65, 3.2 * s, ramp)
+    leaflet(sp, mx, my, ang + 65, 3.2 * s, ramp)
+    leaflet(sp, ex - math.cos(a), ey - math.sin(a), ang, 4.2 * s, ramp)
 
 
 def bud(sp, x, y, s=1.0):
@@ -90,9 +90,11 @@ def draw(stage: int) -> Sprite:
     sp = Sprite()
     meadow_ground(sp)
     if stage == 1:
-        leaflet(sp, 14, BY, -150, 3.5)
-        leaflet(sp, 17, BY, -40, 3.5)
-        leaflet(sp, 16, BY, -100, 4)
+        # roter Trieb mit kleinen gefiederten Blättern (typisch Rose)
+        stalk(sp, 15, BY, 15, 23, bend=0.4, ramp="bw_roseshoot")
+        leaf_group(sp, 15, 26, -155, 0.65)
+        leaf_group(sp, 15, 25, -25, 0.65)
+        leaflet(sp, 15, 24, -92, 3.4)
     elif stage == 2:
         stalk(sp, 15, BY, 15, 20, bend=0.5)
         leaf_group(sp, 15, 26, -150, 0.8)

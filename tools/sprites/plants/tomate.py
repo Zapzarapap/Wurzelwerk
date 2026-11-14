@@ -52,9 +52,11 @@ def draw(stage: int) -> Sprite:
     if stage >= 4:
         tie(sp, SX - 1, 10)
     if stage == 1:
-        for (cx, cy, rx) in ((14, 22, 2.4), (20, 21, 2.4)):
+        for (cx, cy, rx) in ((13.5, 22.5, 2.8), (21, 21.5, 2.8)):
             l = sp.layer(LEAF)
-            l.ellipse(cx, cy, rx, 1.3)
+            l.ellipse(cx, cy, rx, 0.9)
+        t = sp.layer(LEAF)       # erstes echtes Fiederblatt als Knospe
+        t.ellipse(SX + 0.5, 20.5, 1.2, 1.5)
     for fr in FRONDS[stage]:
         compound_leaf(sp, LEAF, *fr)
     # Blattknospe oben

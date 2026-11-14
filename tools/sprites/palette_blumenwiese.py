@@ -21,4 +21,6 @@ EXTRA = {
     "bw_roseleaf": ["#16301f", "#244c30", "#376a3e", "#558c4a", "#86b264"],
     # Pusteblume: luftiges Weiß mit heller, warm-grauer Outline
     "bw_puff":     ["#a89a92", "#d6cec8", "#ebe6e0", "#f8f6f2", "#ffffff"],
+    # Rosen-Neuaustrieb: rötlich-bronzene junge Blätter
+    "bw_roseshoot": ["#4a1c1e", "#843632", "#b8543e", "#d87a54", "#f2a874"],
 }

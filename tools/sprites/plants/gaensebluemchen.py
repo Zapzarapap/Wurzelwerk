@@ -72,6 +72,31 @@ def bud(sp, x, y):
     t.px(x, y - 2, BASE)
 
 
+def spoon_leaf(sp, bx, by, ang, L, W):
+    """Rundes Löffel-/Spatelblatt (typisch für Gänseblümchen), hellgrün, flach liegend."""
+    from parts import leaf_frame
+    lay = sp.layer("stem")
+    a = math.radians(ang)
+    lit_sign = 1 if (math.sin(a) - math.cos(a)) > 0 else -1
+    r = int(L + W + 2)
+    for y in range(int(by - r), int(by + r) + 1):
+        for x in range(int(bx - r), int(bx + r) + 1):
+            u, v = leaf_frame(bx, by, a, x + 0.5, y + 0.5)
+            t = u / L
+            if t < 0 or t > 1:
+                continue
+            w = W * (0.3 + 0.7 * min(1.0, t * 1.8)) * math.sqrt(max(0.0, 1 - max(0.0, (t - 0.55) / 0.45) ** 2))
+            if abs(v) <= max(0.5, w):
+                lay.px(x, y, ("a", LIGHT if v * lit_sign > 0 else BASE))
+    return lay
+
+
+SPOONS = {
+    1: [(14, -172, 4.2, 1.7), (17, -8, 4.2, 1.7), (16, -100, 3.4, 1.4)],
+    2: [(13, -170, 5.8, 2.1), (18, -10, 5.8, 2.1), (15, -135, 4.6, 1.8), (17, -52, 4.6, 1.8)],
+}
+
+
 def draw(stage: int) -> Sprite:
     sp = Sprite()
     meadow_ground(sp)
@@ -82,8 +107,12 @@ def draw(stage: int) -> Sprite:
     for i, (x, y) in enumerate(BUDS[stage]):
         sx = 15 + (i * 3) % 4
         stalk(sp, sx, BY, x, y + 1.5, bend=(x - sx) * -0.2)
-    for (bx, a, L) in ROSETTE[stage]:
-        narrow_leaf(sp, "leaf", bx, BY, a, L, 1.7)
+    if stage in SPOONS:
+        for (bx, a, L, W) in SPOONS[stage]:
+            spoon_leaf(sp, bx, BY, a, L, W)
+    else:
+        for (bx, a, L) in ROSETTE[stage]:
+            narrow_leaf(sp, "leaf", bx, BY, a, L, 1.7)
     for (x, y) in BUDS[stage]:
         bud(sp, x, y)
     for (x, y, r) in fl:

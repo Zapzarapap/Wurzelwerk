@@ -57,15 +57,23 @@ def raceme(sp, ctrl, bells):
             b.px(x + 1, by + 2, LIGHT)
 
 
+def sheath(sp, cx, cy, rx):
+    """Helle, rosa-cremefarbene Blattscheide am Grund (typisch für Maiglöckchen)."""
+    s = sp.layer("cream")
+    s.ellipse(cx, cy + 0.3, rx, 1.0)
+
+
 def draw(stage: int) -> Sprite:
     sp = Sprite()
     forest_ground(sp, w=(10 if stage >= 4 else 8))
     if stage == 1:
         # eingerollte, spitze Blatttüte
         blade_leaf(sp, LEAF, [(16, 28), (16, 25), (17, 21)], 1.4, base_w=0.9, rib=False)
+        sheath(sp, 16.5, 27.2, 1.7)
     elif stage == 2:
         blade_leaf(sp, LEAF, [(16, 28), (17, 22), (19, 16)], 2.2, base_w=0.6)
         blade_leaf(sp, LEAF, [(15, 28), (15, 23), (14, 19)], 1.6, base_w=0.8, rib=False)
+        sheath(sp, 16, 27.4, 1.7)
     elif stage == 3:
         raceme(sp, [(16, 27), (17, 20), (20, 17)], [(19, 0), (20, 0)])
         blade_leaf(sp, LEAF, [(16, 28), (16, 21), (14, 13)], 2.9, base_w=0.5, veins=1)

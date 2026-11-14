@@ -59,13 +59,21 @@ def bracket(sp, x, y, w, h, side):
 def draw(stage: int) -> Sprite:
     sp = Sprite()
     forest_ground(sp, w=(12 if stage >= 4 else 10))
+    if stage == 1:      # niedriger, schmaler Stumpf, erste Konsole deutlich sichtbar
+        x0, x1, top = 12, 19, 19
+        stump(sp, x0, x1, top, low=True)
+        bracket(sp, x1, 22, 4, 2, 1)
+        bracket(sp, x0, 25, 2, 1, -1)
+        return sp
+    if stage == 2:
+        x0, x1, top = 11, 20, 14
+        stump(sp, x0, x1, top, low=True)
+        bracket(sp, x1, 18, 5, 3, 1)
+        bracket(sp, x0, 23, 4, 2, -1)
+        bracket(sp, 15.5, 27, 2.5, 1, 0)
+        return sp
     stump(sp, X0, X1, TOP, low=True)
-    if stage == 1:
-        bracket(sp, X1, 20, 2, 1, 1)
-    elif stage == 2:
-        bracket(sp, X1, 18, 3, 2, 1)
-        bracket(sp, X0, 22, 2, 1, -1)
-    elif stage == 3:
+    if stage == 3:
         bracket(sp, X1, 16, 5, 3, 1)
         bracket(sp, X0, 20, 4, 3, -1)
         bracket(sp, 15.5, 24, 2.5, 1, 0)

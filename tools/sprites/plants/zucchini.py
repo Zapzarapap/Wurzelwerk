@@ -43,9 +43,9 @@ def draw(stage: int) -> Sprite:
     greenhouse_ground(sp)
     if stage == 1:
         stalk(sp, 16, 27, 16, 23, ramp="stem")
-        for (cx, cy) in ((13, 22.5), (19, 22.5)):
+        for (cx, cy) in ((12.5, 22.8), (19.5, 22.8)):
             l = sp.layer(LEAF)
-            l.ellipse(cx, cy, 2.6, 1.4)
+            l.ellipse(cx, cy, 3.4, 1.0)
     elif stage == 2:
         stalk(sp, 16, 27, 16, 20, ramp="stem")
         for (cx, cy) in ((11.5, 24), (20.5, 24)):

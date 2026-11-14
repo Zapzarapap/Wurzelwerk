@@ -19,7 +19,7 @@ VARIANTS = {
 BY = 29
 
 ROSETTE = {
-    1: [(14, -155, 4, 1.8), (17, -30, 4, 1.8), (16, -100, 3.5, 1.6)],
+    1: [(14, -165, 5.5, 2.3), (17, -15, 5.5, 2.3), (16, -100, 4, 1.8)],
     2: [(13, -162, 6, 2.2), (18, -22, 6, 2.2), (15, -122, 4.5, 2), (17, -68, 5, 2)],
     3: [(12, -166, 7, 2.4), (19, -14, 7, 2.4), (14, -132, 5.5, 2.2), (18, -52, 6, 2.2)],
     4: [(11, -168, 7.5, 2.6), (20, -12, 7.5, 2.6), (14, -136, 6, 2.3), (18, -48, 6.5, 2.3)],
@@ -30,7 +30,7 @@ ROSETTE = {
 def rosette(sp, spec, lobed=True):
     for (bx, ang, L, W) in spec:
         heart_leaf(sp.layer("leaf"), bx, BY, ang, L, W, notch=False, midrib=lobed,
-                   splits=(0.55,) if (lobed and L >= 6) else (), vein=SHADE)
+                   splits=(0.55,) if (lobed and L >= 5.5) else (), vein=SHADE)
 
 
 def bud(sp, x, y, s=1.0, opening=False):
@@ -65,7 +65,7 @@ def draw(stage: int) -> Sprite:
         stalk(sp, 15, BY, 10, 13, bend=-1.5)
         stalk(sp, 17, BY, 23, 17, bend=1.2)
         stalk(sp, 16, BY, 17, 21, bend=0.3)
-    rosette(sp, ROSETTE[stage], lobed=stage >= 3)
+    rosette(sp, ROSETTE[stage], lobed=stage >= 1)
     if stage == 2:
         bud(sp, 17, 21, 0.8)
     elif stage == 3:

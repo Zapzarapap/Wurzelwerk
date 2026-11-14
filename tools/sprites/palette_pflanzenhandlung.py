@@ -34,6 +34,7 @@ EXTRA = {
 
     # Echeverie
     "ph_echev":        ["#36605e", "#548a86", "#7cb0a6", "#a4d0bc", "#cfe8d6"],
+    "ph_echev_l":      ["#3f726e", "#548a86", "#7cb0a6", "#a4d0bc", "#cfe8d6"],  # Blattränder innerhalb der Rosette (weicher)
     "ph_echev_pink":   ["#5e243c", "#a04260", "#d0728e", "#ec9cae", "#f8c6cc"],
 
     # Pilea: frisches, glänzendes Mittelgrün
