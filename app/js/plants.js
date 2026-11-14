@@ -24,7 +24,7 @@ const RAW = [
   ['kaktus', 'Kaktus', 'pflanzenhandlung', 'cactus', []],
   ['sukkulente', 'Sukkulente', 'pflanzenhandlung', 'succulent', []],
   ['pilea', 'Pilea', 'pflanzenhandlung', 'leaf', []],
-  ['strelitzie', 'Strelitzie', 'pflanzenhandlung', 'leaf', []],
+  ['strelitzie', 'Strelitzie', 'pflanzenhandlung', 'leaf', ['orange', 'gelb']],
   ['bonsai', 'Bonsai', 'pflanzenhandlung', 'leaf', []],
   ['venusfliegenfalle', 'Venusfliegenfalle', 'pflanzenhandlung', 'succulent', []],
   ['orchidee', 'Orchidee', 'pflanzenhandlung', 'flower', ['weiss', 'rosa', 'lila', 'gelb']],

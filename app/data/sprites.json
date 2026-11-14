@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-14T18:01:30Z",
+ "generated": "2026-11-14T18:06:52Z",
  "species": {
   "alocasia_black_velvet": {
    "default": true,
@@ -161,6 +161,27 @@
     "stage5"
    ],
    "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "bonsai": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "pflanzenhandlung",
    "stages": [
     1,
     2,
@@ -1079,6 +1100,47 @@
    ],
    "variants": []
   },
+  "orchidee": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_lila",
+    "stage1_rosa",
+    "stage1_weiss",
+    "stage2_gelb",
+    "stage2_lila",
+    "stage2_rosa",
+    "stage2_weiss",
+    "stage3_gelb",
+    "stage3_lila",
+    "stage3_rosa",
+    "stage3_weiss",
+    "stage4_gelb",
+    "stage4_lila",
+    "stage4_rosa",
+    "stage4_weiss",
+    "stage5_gelb",
+    "stage5_lila",
+    "stage5_rosa",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "lila",
+    "rosa",
+    "weiss"
+   ]
+  },
   "paprika": {
    "default": false,
    "files": [
@@ -1173,6 +1235,27 @@
    "glow": [],
    "nofoot": [],
    "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "pilea": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "pflanzenhandlung",
    "stages": [
     1,
     2,
@@ -1300,6 +1383,35 @@
    ],
    "variants": []
   },
+  "strelitzie": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_orange",
+    "stage2_gelb",
+    "stage2_orange",
+    "stage3_gelb",
+    "stage3_orange",
+    "stage4_gelb",
+    "stage4_orange",
+    "stage5_gelb",
+    "stage5_orange"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "orange"
+   ]
+  },
   "sukkulente": {
    "default": true,
    "files": [
@@ -1423,6 +1535,27 @@
     "rot",
     "weiss"
    ]
+  },
+  "venusfliegenfalle": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
   },
   "vergissmeinnicht": {
    "default": false,

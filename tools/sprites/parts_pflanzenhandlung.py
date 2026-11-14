@@ -2,7 +2,7 @@
 import math
 from types import SimpleNamespace
 
-from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT, OUTLINE, HOLE
+from pixel import Sprite, Layer, SHADE, BASE, LIGHT, HIGHLIGHT, OUTLINE, HOLE
 from parts import SOIL_Y
 
 
@@ -17,6 +17,8 @@ PROFILES = {
     "round": (-0.02, _norm(lambda t: max(0, (t + 0.02) * (1 - t)) ** 0.5), 0.0),
     "arrow": (-0.15, _norm(lambda t: max(0, t + 0.15) ** 0.6 * max(0, 1 - t) ** 1.3), 0.34),
     "lance": (0.0, _norm(lambda t: math.sin(math.pi * min(1, max(0, t)) ** 0.85) ** 0.9), 0.0),
+    "paddle": (0.0, _norm(lambda t: math.sin(math.pi * min(1, max(0, t)) ** 1.25) ** 0.6), 0.0),
+    "point": (0.0, _norm(lambda t: max(0, t) ** 0.7 * max(0, 1 - t) ** 1.25), 0.0),
     "spoon": (0.0, _norm(lambda t: max(0, t) ** 0.9 * max(0, 1 - t ** 2.2)), 0.0),
 }
 
@@ -151,3 +153,79 @@ def stem(sp: Sprite, x0, y0, x1, y1, bend=0.0, ramp="stem", thick=1):
     else:
         s.curve([(x0, y0), (mx, my), (x1, y1)], tone=SHADE)
     return s
+
+
+# --- saubere Aderlinien ---------------------------------------------------------
+
+def uv_pixels(cells, lines, step=0.25, skip_edge=True):
+    """Linien in Blattkoordinaten (u entlang, v quer) -> zusammenhängende Pixelmenge.
+
+    lines: [((u0, v0), (u1, v1)), ...]. Jeder Abtastpunkt wird auf die Zelle mit
+    dem nächsten (u, v) abgebildet; so folgen die Adern auch gebogenen Blättern.
+    """
+    pts = [(p, c.u, c.v) for p, c in cells.items() if not (skip_edge and c.edge)]
+    out = set()
+    for (u0, v0), (u1, v1) in lines:
+        n = max(2, int(math.hypot(u1 - u0, v1 - v0) / step))
+        for i in range(n + 1):
+            u = u0 + (u1 - u0) * i / n
+            v = v0 + (v1 - v0) * i / n
+            best = min(pts, key=lambda q: (q[1] - u) ** 2 + (q[2] - v) ** 2, default=None)
+            if best and (best[1] - u) ** 2 + (best[2] - v) ** 2 < 0.7:
+                out.add(best[0])
+    return out
+
+
+def uv_to_xy(bx, by, ang, L, bend=0.0):
+    """Abbildung Blattkoordinaten (u, v) -> Bildschirm (x, y) für ein mit leaf() gezeichnetes Blatt."""
+    a0, db = math.radians(ang), math.radians(bend)
+
+    def f(u, v):
+        x, y, s, ds = bx, by, 0.0, 0.1
+        a = a0
+        if u < 0:
+            x, y = bx + math.cos(a0) * u, by + math.sin(a0) * u
+        else:
+            while s < u:
+                st = min(ds, u - s)
+                a = a0 + db * s / L
+                x += math.cos(a) * st
+                y += math.sin(a) * st
+                s += st
+            a = a0 + db * u / L
+        return x - math.sin(a) * v, y + math.cos(a) * v
+    return f
+
+
+def veins(sp, ramp, cells, lines, tone=BASE, skip_edge=True, geom=None):
+    """Aderlinien als eigene Ebene (ohne Outline) über ein Blatt legen.
+
+    Mit geom (aus uv_to_xy) werden die Linien als saubere Pixelstriche im Bild
+    gezogen (empfohlen); sonst über die nächstgelegene Zelle abgebildet."""
+    lay = sp.layer(ramp, outline=False, shading=False)
+    if geom is None:
+        pix = uv_pixels(cells, lines, skip_edge=skip_edge)
+    else:
+        tmp = Layer(ramp)
+        for (u0, v0), (u1, v1) in lines:
+            n = max(1, int(math.hypot(u1 - u0, v1 - v0) / 2.5))
+            pts = [geom(u0 + (u1 - u0) * i / n, v0 + (v1 - v0) * i / n) for i in range(n + 1)]
+            for (xa, ya), (xb, yb) in zip(pts, pts[1:]):
+                tmp.line(math.floor(xa), math.floor(ya), math.floor(xb), math.floor(yb))
+        pix = {p for p in tmp.pixels if p in cells and not (skip_edge and cells[p].edge)}
+    for p in pix:
+        lay.px(p[0], p[1], tone)
+    return lay
+
+
+def herringbone(L, W, n=2, t0=0.18, t1=0.62, slope=1.1, reach=0.8, rib_t=0.88, gap=0.0):
+    """Mittelrippe + n Seitenaderpaare (Fischgrät) als uv-Linien.
+
+    gap: Abstand (quer) zur Mittelrippe, ab dem die Seitenadern beginnen – hält
+    die Adern bei kleinen Blättern getrennt, statt einen Klecks zu bilden."""
+    lines = [((0.3, 0.0), (L * rib_t, 0.0))]
+    for k in range(n if n > 0 else 0):
+        u0 = L * (t0 + (t1 - t0) * k / max(1, n - 1))
+        for sgn in (1, -1):
+            lines.append(((u0 + gap * slope, sgn * gap), (u0 + W * reach * slope, sgn * W * reach)))
+    return lines

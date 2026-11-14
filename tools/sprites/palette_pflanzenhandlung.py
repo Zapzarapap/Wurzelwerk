@@ -21,7 +21,7 @@ EXTRA = {
     "ph_mask_vein":    ["#50826a", "#84b48c", "#b8d8b0", "#dcf0d0", "#f4fce8"],
 
     # Calathea orbifolia: hellgrün + silbrige Streifen
-    "ph_cal_orb":      ["#285432", "#428044", "#66a656", "#90c670", "#bce08e"],
+    "ph_cal_orb":      ["#1f4229", "#32663a", "#4a8848", "#6aa85c", "#98c67a"],
     "ph_cal_stripe":   ["#76a07e", "#a0c49a", "#c8e0b2", "#e0f0cc", "#f4fae0"],
 
     # Calathea lancifolia: hellgrün, dunkle Flecken, purpurne Unterseite
@@ -33,8 +33,30 @@ EXTRA = {
     "ph_cactus":       ["#18362c", "#2a5a44", "#468860", "#70ae7a", "#a2d094"],
 
     # Echeverie
-    "ph_echev":        ["#2e5a5c", "#4e8484", "#7cb0a6", "#a4d0bc", "#cfe8d6"],
+    "ph_echev":        ["#36605e", "#548a86", "#7cb0a6", "#a4d0bc", "#cfe8d6"],
     "ph_echev_pink":   ["#5e243c", "#a04260", "#d0728e", "#ec9cae", "#f8c6cc"],
+
+    # Pilea: frisches, glänzendes Mittelgrün
+    "ph_pilea":        ["#1a3a22", "#2c6a30", "#46983e", "#6cbc52", "#bce894"],
+
+    # Strelitzie: blaugrüne, ledrige Blätter, gelbliche Mittelrippe; Blütenscheide grün-purpur
+    "ph_strel":        ["#142e26", "#244e3c", "#386e52", "#5a926a", "#8cba8e"],
+    "ph_strel_rib":    ["#4a6a3c", "#7a9a56", "#a8c278", "#cadc9a", "#e8f0c0"],
+    "ph_strel_spathe": ["#2a1c30", "#4e3448", "#6e5060", "#8e7270", "#b0a088"],
+
+    # Bonsai: graubraune Rinde, glasierte Schale
+    "ph_bark":         ["#2a1e1a", "#4a3628", "#6a5040", "#8c7058", "#ae9478"],
+    "ph_bonsai_dish":  ["#1a2630", "#2a3e4e", "#3c586a", "#587a8c", "#84a4b2"],
+
+    # Venusfliegenfalle: frisches Gelbgrün, rote Falleninnenseite
+    "ph_vft":          ["#1e3a1a", "#365e22", "#58862e", "#84ae42", "#bcd870"],
+    "ph_vft_red":      ["#4a1018", "#7e1c22", "#b23028", "#d65a3a", "#ee8a5a"],
+
+    # Orchidee (Phalaenopsis): dicke, glänzende Blätter, silbrige Luftwurzeln, Lippe
+    "ph_orchid_leaf":  ["#142c1c", "#22472a", "#336636", "#4f8a46", "#86b866"],
+    "ph_orchid_root":  ["#4a5a4c", "#7a8c7a", "#a4b4a0", "#c4d0bc", "#e2eadc"],
+    "ph_orchid_lip":   ["#4a1030", "#7c1e4a", "#b03466", "#d45a84", "#ee90aa"],
+    "ph_bamboo":       ["#4e3e1e", "#7e6630", "#a88c46", "#c8ac62", "#e2cc8a"],
 
     # Zusatztopf
     "ph_pot_slate":    ["#262c3c", "#424a60", "#626e86", "#8894ac", "#b2bcce"],
