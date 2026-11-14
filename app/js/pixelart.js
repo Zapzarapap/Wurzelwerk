@@ -6,7 +6,8 @@ export const OUTLINE = 0, SHADE = 1, BASE = 2, LIGHT = 3, HIGH = 4;
 
 class Layer {
   constructor(ramp, opts) {
-    this.ramp = RAMPS[ramp] || RAMPS.leaf;
+    // Rampe: Name aus palette.js oder eigenes Array mit 5 Hex-Farben
+    this.ramp = Array.isArray(ramp) ? ramp : RAMPS[ramp] || RAMPS.leaf;
     this.outline = opts.outline ?? true;
     this.shading = opts.shading ?? true;
     this.glow = !!opts.glow;

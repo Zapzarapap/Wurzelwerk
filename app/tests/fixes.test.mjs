@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { tokenBalance, tokensAfterDelete } from '../js/growth.js';
 import { plural, plantSummary, sessionDayLabel } from '../js/text.js';
 import { buildExport, validateBackup, importableKV, importErrorMessage, backupStatus } from '../js/backup.js';
-import { layoutGarden, worldSize } from '../js/layout.js';
+import { buildScene } from '../js/scenekit/engine.js';
+import { SCENES } from '../js/scenes/index.js';
 import { fmtDuration, fmtTime } from '../js/format.js';
 import { sessionMsIn } from '../js/stats.js';
 
@@ -133,26 +134,17 @@ const mk = (n) => Array.from({ length: n }, (_, i) => ({ id: `p-${i}`, createdAt
 for (const region of ['pflanzenhandlung', 'gewaechshaus', 'blumenwiese', 'wald']) {
   test(`${region}: Fläche füllt den Bildschirm, Stellplätze bleiben gleich`, () => {
     for (const n of [3, 60, 500]) {
-      const base = layoutGarden(mk(n), region);
+      const base = buildScene(SCENES[region], mk(n));
       const fill = { W: base.W, H: Math.round(base.W * 1.6) }; // hochkantes Handy
-      const big = layoutGarden(mk(n), region, undefined, fill);
+      const big = buildScene(SCENES[region], mk(n), fill);
       assert.ok(big.W >= fill.W && big.H >= fill.H, `${n}: ${big.W}×${big.H}`);
       assert.ok(big.W <= fill.W + 1 && big.H <= fill.H + 1, `${n}: nicht größer als nötig`);
-      const pos = (l) => Object.fromEntries(l.items.map((i) => [i.plant.id, [i.x, i.y, i.slot]]));
-      const dx = big.items[0].x - base.items.find((i) => i.plant.id === big.items[0].plant.id).x;
-      for (const [id, [x, y, slot]] of Object.entries(pos(base))) {
-        const [x2, y2, slot2] = pos(big)[id];
-        assert.equal(slot2, slot);
-        assert.equal(x2 - x, dx, `${region} ${id}`); // höchstens gemeinsam verschoben (zentriert)
-        assert.ok(y2 >= y);
-      }
+      const pos = (l) => Object.fromEntries(l.items.map((i) => [i.plant.id, [i.x - l.ox, i.y - l.oy, i.spot.key]]));
+      const a = pos(base), b = pos(big);
+      for (const [id, v] of Object.entries(a)) assert.deepEqual(b[id], v, `${region} ${id}`);
     }
   });
 }
-
-test('worldSize unverändert (bestehende Gärten bleiben gleich)', () => {
-  assert.deepEqual(worldSize(1, 'blumenwiese'), { W: 128, H: 168, level: 0 });
-});
 
 // 11 – Desktop-Tabbar, Tippflächen, Kontrast (CSS-Regeln vorhanden)
 test('CSS: Tabbar auf Inhaltsbreite, Tippflächen ≥ 44 px, dunkleres Button-Grün', () => {

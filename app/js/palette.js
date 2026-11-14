@@ -22,7 +22,7 @@ export const RAMPS = {
   // Regionsrampen aus tools/sprites/palette_<region>.py (für Möbel/Beete)
   gh_earth: ['#1c1410', '#2c1e16', '#3e2a1e', '#54382a', '#704e3a'],
   ph_pot_slate: ['#262c3c', '#424a60', '#626e86', '#8894ac', '#b2bcce'],
-  // für Deko (decor.js), ebenfalls aus palette_<region>.py gespiegelt
+  // für Deko (scenes/*.js), ebenfalls aus palette_<region>.py gespiegelt
   gh_butternut: ['#6a4422', '#b07a40', '#dca462', '#f0c688', '#fae4b8'],
   gh_pumpkin_beige: ['#6a5030', '#b49460', '#d8bc84', '#ecd8a8', '#f8f0d0'],
   gh_corn_kernel: ['#6a480c', '#c0861a', '#eebc30', '#f8d85a', '#fdf09c'],
