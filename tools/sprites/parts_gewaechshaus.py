@@ -226,3 +226,502 @@ def ribbed_fruit(sp: Sprite, ramp, cx, cy, rx, ry, ks=(-0.7, -0.3, 0.3, 0.7), st
         s.rect(sx0 - (1 if big else 0), top - (3 if big else 2), sx0, top)
         s.px(sx0 + 1, top - (3 if big else 2))
     return f
+
+
+def chili_pod(sp: Sprite, ramp, x, y, L, bend=0.0, W=3, cap="leaf_deep"):
+    """Schlanke, hängende Chilischote mit klarer Form: oben W px breit, läuft spitz zu.
+
+    Spalten fest schattiert (links hell, Mitte Grundton, rechts Schatten), damit
+    die Schote auch auf Laub klar lesbar bleibt. (x,y) = Mitte der Oberkante.
+    """
+    lay = sp.layer(ramp, shading=False)
+    for i in range(L):
+        t = i / max(L - 1, 1)
+        w = W if t < 0.45 else (2 if t < 0.8 else 1)
+        if W == 2:
+            w = 2 if t < 0.7 else 1
+        cxx = x + bend * t * t
+        left = math.floor(cxx - w / 2 + 0.5)
+        for k in range(w):
+            if w == 1:
+                tone = BASE
+            elif k == 0:
+                tone = LIGHT
+            elif k == w - 1:
+                tone = SHADE
+            else:
+                tone = BASE
+            lay.px(left + k, y + i, tone)
+    left0 = math.floor(x - W / 2 + 0.5)
+    lay.px(left0, y + 1, HIGHLIGHT)
+    if L >= 7:
+        lay.px(left0, y + 2, HIGHLIGHT)
+    if cap:
+        c = sp.layer(cap, outline=False, shading=False)
+        for px in range(left0, left0 + W):
+            c.px(px, y, BASE)
+        c.px(round(x - 0.5) if W % 2 == 0 else round(x), y - 1, LIGHT)
+    return lay
+
+
+def lobed_leaf(lay: Layer, cx, cy, R, lobes=5, depth=0.1, rot=-math.pi / 2, flat=0.9,
+               sinus=0.38, veins=True, sharp=1.0):
+    """Handförmig gelapptes Blatt mit Blattgrund-Einbuchtung (Kürbis, Melone, Zucchini).
+
+    rot: Richtung der Mittellappen-Spitze; der Stiel setzt gegenüber an.
+    depth: Lappentiefe (Kürbis flach ~0.1, Melone tief ~0.35).
+    sharp > 1 macht die Lappen spitzer (Buchten breiter).
+    Gibt die Pixelmenge zurück.
+    """
+    r_max = int(R + 2)
+    shape = set()
+    base_th = rot + math.pi
+    for y in range(int(cy - r_max), int(cy + r_max) + 1):
+        for x in range(int(cx - r_max), int(cx + r_max) + 1):
+            dx, dy = x + 0.5 - cx, (y + 0.5 - cy) / flat
+            r = math.hypot(dx, dy)
+            th = math.atan2(dy, dx)
+            c = math.cos(lobes * (th - rot))
+            # Lappen: c=1 Spitze, c=-1 Bucht
+            k = ((c + 1) / 2) ** sharp
+            lim = R * (1 - depth + depth * (2 * k - 1))
+            # Blattgrund ausgespart (Stielbucht)
+            dth = math.atan2(math.sin(th - base_th), math.cos(th - base_th))
+            if sinus and abs(dth) < sinus and r > R * 0.25:
+                continue
+            if r <= lim:
+                shape.add((x, y))
+    for (x, y) in shape:
+        dx, dy = x + 0.5 - cx, (y + 0.5 - cy)
+        lit = (dx + dy) < -0.1 * R
+        lay.px(x, y, ("a", LIGHT if lit else BASE))
+    if veins:
+        for kk in range(lobes):
+            th = rot + 2 * math.pi * kk / lobes
+            dth = math.atan2(math.sin(th - base_th), math.cos(th - base_th))
+            if abs(dth) < 2.0:  # nur Mittel- und die beiden oberen Seitenadern
+                continue
+            for i in range(1, int(R * 0.72)):
+                p = (math.floor(cx + math.cos(th) * i), math.floor(cy + math.sin(th) * i * flat))
+                if p in shape and lay.pixels.get(p) not in (OUTLINE, HOLE):
+                    lay.px(*p, HIGHLIGHT if lay.pixels[p] == ("a", LIGHT) else LIGHT)
+    return shape
+
+
+def pumpkin_fruit(sp: Sprite, ramp, cx, cy, rx, ry, ribs=5, dimple=0.22, stem_ramp="stem",
+                  stem_dx=1):
+    """Flacher, gerippter Kürbis mit eingesenktem Stielansatz. cy = Mitte."""
+    f = sp.layer(ramp, shading=False)
+    for y in range(math.floor(cy - ry) - 1, math.ceil(cy + ry) + 1):
+        for x in range(math.floor(cx - rx) - 1, math.ceil(cx + rx) + 1):
+            dx = (x + 0.5 - cx) / rx
+            dy = (y + 0.5 - cy) / ry
+            if abs(dx) ** 2.3 + abs(dy) ** 2 > 1:
+                continue
+            # Delle oben in der Mitte
+            if dy < 0 and dy < -1 + dimple * max(0.0, 1 - abs(dx) / 0.38):
+                continue
+            f.px(x, y, BASE)
+    pts = set(f.pixels)
+    rows = {}
+    for (x, y) in pts:
+        rows.setdefault(y, []).append(x)
+    ks = [math.sin(math.pi * (i / ribs - 0.5)) for i in range(1, ribs)]
+    for y, xs in rows.items():
+        x0, x1 = min(xs), max(xs)
+        mid, half = (x0 + x1 + 1) / 2, (x1 - x0 + 1) / 2
+        dy = (y + 0.5 - cy) / ry
+        for x in xs:
+            u = (x + 0.5 - mid) / half
+            tone = BASE
+            if u < -0.35 and dy < 0.45:
+                tone = LIGHT
+            if u > 0.6 or dy > 0.65:
+                tone = SHADE
+            if (x, y + 1) not in pts:
+                tone = SHADE
+            f.px(x, y, tone)
+        if dy < -0.8:
+            continue
+        for k in ks:
+            gx = math.floor(mid + k * half * 0.92)
+            if x0 < gx < x1 and dy < 0.75 and (gx, y + 1) in pts:
+                f.px(gx, y, OUTLINE if (gx + 0.5 - mid) / half > 0.55 and dy < 0.5 else SHADE)
+                if k < 0.3 and dy < 0.4 and (gx + 1, y) in pts and gx + 1 < x1:
+                    f.px(gx + 1, y, LIGHT)
+    # Glanz auf dem linken oberen Segment
+    hx, hy = round(cx - rx * 0.55 - 0.5), round(cy - ry * 0.45 - 0.5)
+    if (hx, hy) in pts:
+        f.px(hx, hy, HIGHLIGHT)
+    if (hx, hy + 1) in pts:
+        f.px(hx, hy + 1, LIGHT)
+    # kurzer, kräftiger Stiel, leicht zur Seite gebogen
+    top = min(y for (x, y) in pts if abs(x + 0.5 - cx) < 1.2)
+    s = sp.layer(stem_ramp)
+    sx = math.floor(cx)
+    s.px(sx, top, BASE)
+    s.px(sx, top - 1, LIGHT)
+    s.px(sx + stem_dx, top - 1, BASE)
+    s.px(sx + stem_dx, top - 2, LIGHT)
+    return f
+
+
+def serrated_oval(lay: Layer, cx, cy, rx, ry, ang=0.0, teeth=True, vein=True):
+    """Ovales Blättchen mit gezähntem Rand (Erdbeere). ang in Grad = Richtung der Spitze."""
+    a = math.radians(ang)
+    ca, sa = math.cos(a), math.sin(a)
+    pts = set()
+    R = int(max(rx, ry) + 2)
+    for y in range(int(cy - R), int(cy + R) + 1):
+        for x in range(int(cx - R), int(cx + R) + 1):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            u = dx * ca + dy * sa
+            v = -dx * sa + dy * ca
+            if (u / rx) ** 2 + (v / ry) ** 2 <= 1:
+                pts.add((x, y))
+    for (x, y) in pts:
+        dx, dy = x + 0.5 - cx, y + 0.5 - cy
+        lay.px(x, y, ("a", LIGHT if dx + dy < -0.3 else BASE))
+    if teeth:
+        # Zähne: jeden zweiten Randpixel der vorderen Blatthälfte wegnehmen,
+        # die Outline folgt dann als Zackenkante
+        cut = []
+        for (x, y) in pts:
+            edge = sum((x + ex, y + ey) not in pts for ex, ey in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            if edge == 1 and (x + y) % 2 == 0 and (dx * ca + dy * sa) > rx * 0.25:
+                cut.append((x, y))
+        for p in cut:
+            lay.erase(*p)
+            pts.discard(p)
+    if vein:
+        for i in range(0, int(rx)):
+            p = (math.floor(cx - ca * 0.3 + ca * i * 0.8), math.floor(cy - sa * 0.3 + sa * i * 0.8))
+            if p in pts:
+                lay.px(*p, HIGHLIGHT if i < rx * 0.5 else LIGHT)
+    return pts
+
+
+def trifoliate(sp: Sprite, ramp, x, y, ang, size=2.6, spread=52):
+    """Dreiteiliges Blatt: Mittelblättchen in Richtung ang, zwei seitliche schräg darunter.
+    (x,y) = Ende des Blattstiels."""
+    out = []
+    for da, k, s in ((-spread, 0.88, 0.9), (spread, 0.88, 0.9), (0, 1.0, 1.0)):
+        a = math.radians(ang + da)
+        d = size * k * 0.95
+        lay = sp.layer(ramp)
+        serrated_oval(lay, x + math.cos(a) * d, y + math.sin(a) * d, size * s, size * s * 0.72, ang + da)
+        out.append(lay)
+    return out
+
+
+BERRY_BIG = ["XXXX.", "XXXXX", "XXXXX", "XXXXX", ".XXX.", "..X.."]
+BERRY_MID = ["XXXX", "XXXX", "XXXX", ".XX.", ".X.."]
+BERRY_SMALL = ["XXX", "XXX", ".X."]
+SEEDS = {5: ((3, 1), (1, 3), (3, 3), (2, 4)), 4: ((2, 1), (1, 3)), 3: ((1, 1),)}
+
+
+def strawberry(sp: Sprite, ramp, x, y, tpl=BERRY_BIG, seeds=True, calyx_ramp="leaf_deep"):
+    """Erdbeere nach Schablone; (x,y) = linke obere Ecke. Nüsschen als helle Punkte."""
+    rows = [r.replace(".", " ") for r in tpl]
+    if len(tpl[0]) == 5:
+        rows[0] = ".XXX."
+    lay = sp.layer(ramp, shading=False)
+    pts = []
+    for j, row in enumerate(tpl):
+        for i, ch in enumerate(row):
+            if ch == "X":
+                pts.append((x + i, y + j))
+    W = len(tpl[0])
+    for (px, py) in pts:
+        i, j = px - x, py - y
+        tone = BASE
+        if i == 0 or (j <= 1 and i == 1):
+            tone = LIGHT
+        if i == W - 1 or (px + 1, py) not in pts or (px, py + 1) not in pts:
+            tone = SHADE
+        lay.px(px, py, tone)
+    if (x + 1, y + 1) in pts:
+        lay.px(x + 1, y + 1, HIGHLIGHT)
+    if seeds:
+        sd = sp.layer("petal_yellow", outline=False, shading=False)
+        for (i, j) in SEEDS.get(W, ()):
+            if (x + i, y + j) in pts:
+                sd.px(x + i, y + j, LIGHT if i < W / 2 else BASE)
+    c = sp.layer(calyx_ramp, outline=False, shading=False)
+    for i in range(-1, W + 1):
+        if i % 2 == (0 if W % 2 else 1) or i in (-1, W):
+            c.px(x + i, y, BASE if i not in (-1, W) else SHADE)
+    c.px(x + W // 2, y - 1, LIGHT)
+    return lay
+
+
+def small_bloom(sp: Sprite, x, y, ramp="petal_white", center="petal_yellow"):
+    """Fünfzählige Blüte (Erdbeere): 3x3 mit gelber Mitte, mit Outline."""
+    f = sp.layer(ramp)
+    for (dx, dy) in ((0, -1), (-1, 0), (1, 0), (-1, 1), (1, 1), (0, 0)):
+        f.px(x + dx, y + dy, LIGHT if dx <= 0 and dy <= 0 else BASE)
+    c = sp.layer(center, outline=False, shading=False)
+    c.px(x, y, BASE)
+    return f
+
+
+PEPPER_BIG = [".XXXXX.", "XXXXXXX", "XXXXXXX", "XXXXXXX", "XXXXXXX", "XXXXXXX", ".XX.XX."]
+PEPPER_MID = [".XXX.", "XXXXX", "XXXXX", "XXXXX", "XXXXX", "XX.XX"]
+PEPPER_SMALL = [".XX.", "XXXX", "XXXX", "XXXX", ".XX."]
+
+
+def bell_pepper(sp: Sprite, ramp, x, y, tpl=PEPPER_BIG, calyx_ramp="leaf_deep", lean=1):
+    """Glänzende Paprika (Blockform, unten gelappt). (x,y) = linke obere Ecke des Körpers.
+    lean: Richtung, in die der Stiel oben abknickt (-1/1)."""
+    W = len(tpl[0])
+    pts = {(x + i, y + j) for j, r in enumerate(tpl) for i, c in enumerate(r) if c == "X"}
+    lay = sp.layer(ramp, shading=False)
+    crease = W // 2 + 1 if W >= 5 else None
+    for (px, py) in pts:
+        i, j = px - x, py - y
+        tone = BASE
+        if i == 0 or (px - 1, py) not in pts:
+            tone = LIGHT
+        if (px + 1, py) not in pts or (px, py + 1) not in pts:
+            tone = SHADE
+        if crease is not None and i == crease and 1 < j < len(tpl) - 1:
+            tone = SHADE
+        lay.px(px, py, tone)
+    # Glanzstreifen
+    for j in range(1, max(2, len(tpl) - 3)):
+        if (x + 1, y + j) in pts:
+            lay.px(x + 1, y + j, HIGHLIGHT if j <= 2 else LIGHT)
+    # Kelch + kräftiger Stiel
+    c = sp.layer(calyx_ramp, outline=False, shading=False)
+    mid = x + (W - 1) // 2
+    for i in range(-1, 2):
+        c.px(mid + i, y, BASE if i else LIGHT)
+    c.px(mid, y - 1, LIGHT)
+    c.px(mid + lean, y - 2, BASE)
+    return lay
+
+
+def eggplant(sp: Sprite, ramp, x, y, L=10, W=5, bend=0.0, calyx_ramp="gh_eggplant_leaf"):
+    """Hängende, glänzende Aubergine (oben schmal, unten bauchig) mit Kelchkappe.
+    (x,y) = Mitte der Oberkante."""
+    lay = sp.layer(ramp, shading=False)
+    rows = []
+    for i in range(L):
+        t = (i + 0.5) / L
+        hw = W / 2 * (0.4 + 0.6 * min(1.0, t / 0.62) ** 0.9)
+        if t > 0.74:
+            k = (t - 0.74) / 0.26
+            hw *= math.sqrt(max(0.0, 1 - k * k)) * 0.85 + 0.15
+        c = x + bend * t * t
+        left, right = math.floor(c - hw + 0.5), math.floor(c + hw - 0.5)
+        if right < left:
+            right = left
+        rows.append((y + i, left, right))
+    pts = {(px, py) for (py, l, r) in rows for px in range(l, r + 1)}
+    for (py, l, r) in rows:
+        for px in range(l, r + 1):
+            tone = BASE
+            if px == l:
+                tone = LIGHT
+            if px == r or (px, py + 1) not in pts:
+                tone = SHADE
+            lay.px(px, py, tone)
+    for (py, l, r) in rows[2:int(L * 0.65)]:
+        if r - l >= 2:
+            lay.px(l + 1, py, HIGHLIGHT if py - y < L * 0.45 else LIGHT)
+    # Kelchkappe: etwas breiter als der Fruchthals, mit Zipfeln nach unten
+    c = sp.layer(calyx_ramp)
+    l0, r0 = rows[0][1], rows[0][2]
+    for px in range(l0 - 1, r0 + 2):
+        c.px(px, y, LIGHT if px <= l0 else BASE)
+    c.px(l0 - 1, y + 1, BASE)
+    c.px(r0 + 1, y + 1, SHADE)
+    c.px((l0 + r0) // 2, y + 1, BASE)
+    c.px(l0, y + 2, BASE)
+    c.px((l0 + r0) // 2, y - 1, LIGHT)
+    c.px((l0 + r0) // 2, y - 2, BASE)
+    return lay
+
+
+def star_bloom(sp: Sprite, x, y, ramp="petal_purple", center="petal_yellow"):
+    """Sternförmige, nickende Blüte (Aubergine): 3x3-Kreuz mit Ecken, gelbe Staubbeutel."""
+    f = sp.layer(ramp)
+    for (dx, dy) in ((0, -1), (-1, 0), (1, 0), (0, 1), (-1, -1), (1, 1), (0, 0)):
+        f.px(x + dx, y + dy, LIGHT if dx + dy < 0 else BASE)
+    c = sp.layer(center, outline=False, shading=False)
+    c.px(x, y, LIGHT)
+    return f
+
+
+TRUMPET_BIG = [".X.X.X.", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..."]
+TRUMPET_SMALL = ["X.X.X", "XXXXX", ".XXX.", "..X.."]
+
+
+def trumpet_bloom(sp: Sprite, x, y, tpl=TRUMPET_BIG, ramp="petal_yellow", throat="petal_orange"):
+    """Große, nach oben offene Trichterblüte (Zucchini). (x,y) = linke obere Ecke."""
+    f = sp.layer(ramp, shading=False)
+    W = len(tpl[0])
+    for j, row in enumerate(tpl):
+        for i, ch in enumerate(row):
+            if ch == "X":
+                tone = BASE
+                if j <= 1 and i < W // 2:
+                    tone = LIGHT
+                if j >= 2 and i > W // 2:
+                    tone = SHADE
+                f.px(x + i, y + j, tone)
+    t = sp.layer(throat, outline=False, shading=False)
+    for i in range(W // 2 - 1, W // 2 + 2):
+        t.px(x + i, y + 1, BASE if i != W // 2 else SHADE)
+    if W >= 7:
+        f.px(x + 1, y + 1, HIGHLIGHT)
+    return f
+
+
+def lying_squash(sp: Sprite, ramp, x0, x1, yc, h=3.6, stem_left=True, speckle=True,
+                 blossom=True):
+    """Liegende Zucchini (waagerechter Zylinder). Stielende schmaler; am Blütenende ein
+    Rest der gelben Blüte. yc = Mittellinie."""
+    lay = sp.layer(ramp, shading=False)
+    L = x1 - x0
+    pts = set()
+    for x in range(x0, x1 + 1):
+        t = (x - x0) / max(L, 1)
+        if not stem_left:
+            t = 1 - t
+        r = h / 2 * (0.72 + 0.28 * min(1.0, t / 0.35))
+        if t > 0.9:
+            r *= 0.8
+        for y in range(math.floor(yc - r + 0.5), math.floor(yc + r + 0.5)):
+            pts.add((x, y))
+    for (x, y) in pts:
+        tone = BASE
+        if (x, y - 1) not in pts:
+            tone = LIGHT
+        if (x, y + 1) not in pts:
+            tone = SHADE
+        lay.px(x, y, tone)
+    if speckle:
+        for (x, y) in sorted(pts):
+            if (x, y - 1) in pts and (x, y + 1) in pts and (x * 3 + y) % 5 == 0:
+                lay.px(x, y, LIGHT)
+    # Glanz oben
+    top = min(y for (x, y) in pts)
+    for x in range(x0 + 2, x1 - 2, 3):
+        if (x, top) in pts:
+            lay.px(x, top, HIGHLIGHT)
+    sx = x0 - 1 if stem_left else x1 + 1
+    st = sp.layer("stem", shading=False)
+    st.px(sx, math.floor(yc) - 1, LIGHT)
+    st.px(sx, math.floor(yc), BASE)
+    if blossom:
+        bx = x1 + 1 if stem_left else x0 - 1
+        b = sp.layer("petal_yellow", shading=False)
+        b.px(bx, math.floor(yc) - 1, LIGHT)
+        b.px(bx, math.floor(yc), SHADE)
+    return lay
+
+
+def ribbon_leaf(sp: Sprite, ramp, pts, wide=0.55, steps=60):
+    """Langes, bandförmiges Blatt (Mais) entlang einer Bezier-Kurve.
+    Die ersten `wide` Anteile sind 2 px breit (Oberseite hell), danach 1 px bis zur Spitze."""
+    def bez(t):
+        p = list(pts)
+        while len(p) > 1:
+            p = [(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t) for a, b in zip(p, p[1:])]
+        return p[0]
+    lay = sp.layer(ramp, shading=False)
+    prev = None
+    for i in range(steps + 1):
+        t = i / steps
+        x, y = bez(t)
+        cur = (math.floor(x), math.floor(y))
+        if cur == prev:
+            continue
+        prev = cur
+        lay.px(cur[0], cur[1], LIGHT if t < wide else BASE)
+        if t < wide:
+            lay.px(cur[0], cur[1] + 1, BASE if t < wide * 0.6 else SHADE)
+    # Gerade Strecken mit Lücken vermeiden: Bresenham zwischen Stützpunkten
+    return lay
+
+
+def corn_stalk(sp: Sprite, x, y_top, y_bot=SOIL_Y, ramp="gh_corn_leaf", nodes=()):
+    """Maisstängel, 2 px breit, mit dunkleren Knoten."""
+    s = sp.layer(ramp, shading=False)
+    for y in range(y_top, y_bot + 1):
+        s.px(x, y, LIGHT)
+        s.px(x + 1, y, BASE)
+    for ny in nodes:
+        if y_top < ny <= y_bot:
+            s.px(x, ny, BASE)
+            s.px(x + 1, ny, SHADE)
+    return s
+
+
+def corn_tassel(sp: Sprite, x, y_top, branches=((-4, 3), (4, 3), (-3, 5), (3, 5)), spike=5,
+                ramp="gh_corn_tassel"):
+    """Fahne: Mittelähre + seitlich bogig überhängende Ästchen mit Ährchen-Punkten.
+    x = Spalte der Mittelähre, y_top = Spitze. branches: (dx Ende, Ansatz-Tiefe).
+    Ohne Outline, dafür kräftige Töne, damit sie fein und luftig bleibt."""
+    t = sp.layer(ramp, outline=False, shading=False)
+    for i in range(spike):
+        t.px(x, y_top + i, LIGHT if i % 2 == 0 else SHADE)
+        if i % 2 == 0 and 0 < i < spike - 1:
+            t.px(x - 1, y_top + i, BASE)
+    for (dx, depth) in branches:
+        y0 = y_top + depth
+        d = 1 if dx > 0 else -1
+        n = abs(dx)
+        for k in range(1, n + 1):
+            yy = y0 - (1 if 1 < k < n else 0) + (1 if k == n else 0)
+            t.px(x + d * k, yy, LIGHT if k % 2 else SHADE)
+            if k == n:
+                t.px(x + d * k, yy + 1, BASE)
+    return t
+
+
+def corn_ear(sp: Sprite, x, y_bot, H=8, lean=1, husk="gh_corn_husk", kernel="gh_corn_kernel",
+             silk="gh_corn_silk"):
+    """Maiskolben, schräg vom Stängel abstehend: gelbe Körner (Schachbrett), unten und an
+    der Seite grüne Hüllblätter, oben braune Seide. (x, y_bot) = Ansatz am Stängel;
+    lean = Richtung (+1 rechts, -1 links)."""
+    rows = []
+    for i in range(H):
+        t = i / (H - 1)
+        cx = x + lean * (0.8 + t * 2.0)
+        w = 2 if (t < 0.1 or t > 0.88) else 3
+        left = math.floor(cx - w / 2 + 0.5)
+        rows.append((y_bot - i, left, w, t))
+    k = sp.layer(kernel, shading=False)
+    for (y, left, w, t) in rows:
+        if t < 0.2:
+            continue
+        for j in range(w):
+            tone = LIGHT if (j + y) % 2 == 0 else BASE
+            if j == w - 1 and w == 3:
+                tone = BASE if (j + y) % 2 == 0 else SHADE
+            k.px(left + j, y, tone)
+    y, left, w, t = rows[-1]
+    k.px(left, y, HIGHLIGHT)
+    h = sp.layer(husk, shading=False)
+    for (y, left, w, t) in rows:
+        if t <= 0.3:
+            for j in range(w):
+                h.px(left + j, y, LIGHT if j == 0 else (SHADE if j == w - 1 else BASE))
+        elif t < 0.62:
+            # Hüllblatt-Streifen an der dem Stängel zugewandten Seite
+            side = left if lean > 0 else left + w - 1
+            h.px(side, y, BASE if lean > 0 else SHADE)
+    # aufgeschlagene Hüllblattspitze nach außen
+    y0, left0, w0, _ = rows[2]
+    h.px(left0 + (w0 if lean > 0 else -1), y0 - 1, LIGHT)
+    s = sp.layer(silk, outline=False, shading=False)
+    y, left, w, t = rows[-1]
+    tip = left + (w - 1 if lean > 0 else 0)
+    s.px(tip, y - 1, BASE)
+    s.px(tip + lean, y - 2, LIGHT)
+    s.px(tip + lean, y - 1, SHADE)
+    s.px(tip + 2 * lean, y - 1, BASE)
+    return k

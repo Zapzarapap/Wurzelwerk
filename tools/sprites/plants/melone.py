@@ -1,13 +1,17 @@
-"""Melone – Gewächshaus. Kriechend, große gelappte Blätter, Stufe 5 gestreifte Melone."""
+"""Melone (Wassermelone) – Gewächshaus. Kriechend, kleinere, tief gelappte dunkle Blätter,
+kleine gelbe Blüten; Stufe 5 große gestreifte Melone."""
 REGION = "gewaechshaus"
+
+import math
 
 from pixel import Sprite
 from parts import stalk
-from parts_gewaechshaus import (greenhouse_ground, round_leaf, striped_fruit, flower,
+from parts_gewaechshaus import (greenhouse_ground, lobed_leaf, striped_fruit, flower,
                                 tendril, SOIL_Y)
 
 LEAF = "leaf_deep"
 KS = (-0.62, -0.2, 0.22, 0.64)
+UP = -math.pi / 2
 
 
 def vine(sp, pts):
@@ -16,50 +20,59 @@ def vine(sp, pts):
     return v
 
 
+def leaf(sp, x, y, R, tilt=0.0):
+    """Tief gelapptes Melonenblatt (deutlich anders als das runde Kürbisblatt)."""
+    lobed_leaf(sp.layer(LEAF), x, y, R, lobes=5, depth=0.34, rot=UP + tilt, flat=0.92,
+               sinus=0.3, sharp=1.0)
+
+
 def draw(stage: int) -> Sprite:
     sp = Sprite()
     greenhouse_ground(sp)
     if stage == 1:
-        for (cx, cy) in ((13, 23), (19, 22)):
-            l = sp.layer(LEAF)
-            l.ellipse(cx, cy, 2.4, 1.3)
         stalk(sp, 16, 27, 16, 23, ramp="stem")
-    elif stage == 2:
-        for (cx, cy) in ((11, 24), (21, 24)):
+        for (cx, cy) in ((13.5, 22.5), (18.5, 22)):
             l = sp.layer(LEAF)
-            l.ellipse(cx, cy, 2.2, 1.1)
+            l.ellipse(cx, cy, 2.2, 1.2)
+    elif stage == 2:
         stalk(sp, 16, 27, 16, 20, ramp="stem")
-        round_leaf(sp.layer(LEAF), 16, 17, 3.8, lobes=5, depth=0.25)
+        for (cx, cy) in ((12, 24), (20, 24)):
+            l = sp.layer(LEAF)
+            l.ellipse(cx, cy, 2.1, 1.1)
+        leaf(sp, 16.5, 17, 3.8, 0.2)
     elif stage == 3:
-        vine(sp, [(12, 27), (16, 24), (22, 25), (27, 26)])
-        stalk(sp, 13, 27, 9, 18, ramp="stem")
+        vine(sp, [(12, 27), (16, 25), (22, 26), (27, 26)])
+        stalk(sp, 13, 26, 9, 19, ramp="stem")
         stalk(sp, 17, 25, 17, 15, ramp="stem")
-        stalk(sp, 23, 25, 25, 20, ramp="stem")
-        round_leaf(sp.layer(LEAF), 9, 17, 4.8, depth=0.2)
-        round_leaf(sp.layer(LEAF), 17, 13, 5.4, depth=0.2, rot=-1.3)
-        round_leaf(sp.layer(LEAF), 25, 19, 3.8, depth=0.2, rot=-1.7)
-        flower(sp, 22, 23)
+        stalk(sp, 23, 26, 25, 21, ramp="stem")
+        leaf(sp, 9, 17.5, 4.2, -0.3)
+        leaf(sp, 17, 13.5, 4.8, 0.1)
+        leaf(sp, 25, 20, 3.4, 0.5)
+        flower(sp, 21, 23)
     elif stage == 4:
-        vine(sp, [(9, 27), (14, 24), (21, 26), (28, 26)])
-        stalk(sp, 10, 27, 7, 16, ramp="stem")
-        stalk(sp, 15, 25, 16, 11, ramp="stem")
-        stalk(sp, 24, 26, 25, 16, ramp="stem")
-        round_leaf(sp.layer(LEAF), 7, 15, 5.8, depth=0.22)
-        round_leaf(sp.layer(LEAF), 16, 10, 6.2, depth=0.22, rot=-1.3)
-        round_leaf(sp.layer(LEAF), 25, 15, 4.8, depth=0.2, rot=-1.8)
-        striped_fruit(sp, "gh_melon", "gh_melon_stripe", 20.5, 23.8, 3.9, 3.4, (-0.45, 0.1, 0.6))
-        flower(sp, 12, 21)
+        vine(sp, [(8, 27), (14, 25), (21, 26), (28, 26)])
+        stalk(sp, 10, 26, 7, 16, ramp="stem")
+        stalk(sp, 15, 25, 15, 11, ramp="stem")
+        stalk(sp, 24, 26, 25, 15, ramp="stem")
+        leaf(sp, 7, 14.5, 4.8, -0.4)
+        leaf(sp, 15.5, 9.5, 5.4, 0.1)
+        leaf(sp, 24.5, 13.5, 4.4, 0.5)
+        leaf(sp, 10.5, 21.5, 3.4, -0.2)
+        striped_fruit(sp, "gh_melon", "gh_melon_stripe", 20.5, 23.6, 4.0, 3.4, (-0.45, 0.1, 0.6), stem=False)
+        flower(sp, 6, 23)
+        tendril(sp, [(26, 26), (28, 24), (27, 22), (26, 23)])
     else:
-        vine(sp, [(7, 27), (11, 24), (19, 26), (28, 26)])
-        stalk(sp, 9, 26, 7, 14, ramp="stem")
-        stalk(sp, 12, 25, 16, 8, ramp="stem")
-        stalk(sp, 22, 26, 25, 12, ramp="stem")
-        stalk(sp, 8, 27, 5, 23, ramp="stem")
-        round_leaf(sp.layer(LEAF), 8, 13, 6.4, depth=0.22, rot=-1.7)
-        round_leaf(sp.layer(LEAF), 17, 8, 6.6, depth=0.22, rot=-1.3)
-        round_leaf(sp.layer(LEAF), 25, 11, 5.2, depth=0.22, rot=-1.9)
-        striped_fruit(sp, "gh_melon", "gh_melon_stripe", 19, 22, 7.2, 5.8, KS)
-        round_leaf(sp.layer(LEAF), 5.5, 23, 3.6, depth=0.2, rot=-1.4)
-        flower(sp, 10, 21)
-        tendril(sp, [(8, 27), (5, 28), (3, 26), (5, 25)]) if False else None
+        vine(sp, [(6, 27), (11, 25), (20, 26), (29, 26)])
+        stalk(sp, 8, 26, 6, 14, ramp="stem")
+        stalk(sp, 12, 25, 14, 8, ramp="stem")
+        stalk(sp, 22, 25, 23, 9, ramp="stem")
+        stalk(sp, 27, 26, 28, 18, ramp="stem")
+        leaf(sp, 6, 12.5, 5.0, -0.5)
+        leaf(sp, 14, 7, 5.4, 0.0)
+        leaf(sp, 23.5, 8, 5.2, 0.45)
+        leaf(sp, 27.5, 17.5, 3.6, 0.7)
+        striped_fruit(sp, "gh_melon", "gh_melon_stripe", 17, 21.6, 8.0, 5.6, KS, stem=False)
+        leaf(sp, 5.5, 22, 3.6, -0.6)
+        flower(sp, 26, 24)
+        tendril(sp, [(10, 25), (9, 22), (11, 20), (12, 22)])
     return sp

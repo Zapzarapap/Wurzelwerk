@@ -63,11 +63,30 @@ def draw(stage: int) -> Sprite:
         if L >= 5:
             gloss(sp, bx, by, ang, L)
     if stage == 5:
-        # Blütenansatz oben
-        stalk(sp, 16, 8, 16, 4, ramp="stem")
-        b = sp.layer("petal_white")
-        b.px(16, 3)
-        b.px(16, 4)
-        b2 = sp.layer("petal_white")
-        b2.px(14, 6)
+        # Blütenähren: weiße Lippenblüten in Etagen, grüne Hochblätter dazwischen
+        stalk(sp, 16, 9, 16, 6, ramp="stem")
+        spike(sp, 16, 2, 8)
+        spike(sp, 12, 6, 10, tiers=2)
     return sp
+
+
+def spike(sp, x, ytop, ybot, tiers=3):
+    """Basilikum-Blütenähre (x = Mitte, ytop..ybot)."""
+    body = sp.layer(LEAF, shading=False)
+    for y in range(ytop, ybot + 1):
+        body.px(x, y, SHADE)
+    whites = []
+    for i in range(tiers):
+        y = ytop + 1 + 2 * i
+        if y + 1 > ybot:
+            break
+        body.px(x - 1, y)
+        body.px(x + 1, y)
+        body.px(x - 1, y + 1, LIGHT)
+        body.px(x + 1, y + 1, BASE)
+        whites += [(x - 1, y, HIGHLIGHT), (x + 1, y, LIGHT)]
+    body.px(x, ytop)
+    whites.append((x, ytop, HIGHLIGHT))
+    w = sp.layer("petal_white", outline=False, shading=False)
+    for (px, py, t) in whites:
+        w.px(px, py, t)

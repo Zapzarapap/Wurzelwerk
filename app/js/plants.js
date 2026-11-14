@@ -35,7 +35,7 @@ const RAW = [
   ['melone', 'Melone', 'gewaechshaus', 'veg', []],
   ['kuerbis', 'Kürbis', 'gewaechshaus', 'veg', []],
   ['chili', 'Chili', 'gewaechshaus', 'veg', ['rot', 'gelb', 'orange']],
-  ['erdbeere', 'Erdbeere', 'gewaechshaus', 'berry', []],
+  ['erdbeere', 'Erdbeere', 'gewaechshaus', 'berry', ['weiss', 'rosa']],
   ['paprika', 'Paprika', 'gewaechshaus', 'veg', ['rot', 'gelb', 'orange', 'gruen']],
   ['aubergine', 'Aubergine', 'gewaechshaus', 'veg', []],
   ['zucchini', 'Zucchini', 'gewaechshaus', 'veg', []],
