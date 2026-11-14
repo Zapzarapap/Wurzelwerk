@@ -1,4 +1,4 @@
-// Pflanzenkatalog – alle 32 Arten aus docs/KONZEPT.md.
+// Pflanzenkatalog – alle 52 Arten aus docs/KONZEPT.md.
 // variants: natürliche Farben (Fallback). Vorhandene Sprite-Dateien
 // (app/data/sprites.json) haben Vorrang, siehe sprites.js.
 // kind: grobe Form für den Platzhalter, solange kein Sprite existiert.
@@ -6,9 +6,9 @@
 import { CONFIG } from './config.js';
 
 export const REGIONS = [
-  { id: 'pflanzenhandlung', name: 'Pflanzenhandlung', short: 'Laden', desc: 'Zimmerpflanzen in Töpfen, Regale und Hängeampeln.' },
+  { id: 'pflanzenhandlung', name: 'Pflanzenhandlung', short: 'Pflanzenhandlung', desc: 'Zimmerpflanzen in Töpfen, Regale und Hängeampeln.' },
   { id: 'gewaechshaus', name: 'Gewächshaus', short: 'Gewächshaus', desc: 'Gemüse und Kräuter in Beeten.' },
-  { id: 'blumenwiese', name: 'Blumenwiese', short: 'Wiese', desc: 'Locker verstreute Blumen in vielen Farben.' },
+  { id: 'blumenwiese', name: 'Blumenwiese', short: 'Blumenwiese', desc: 'Locker verstreute Blumen in vielen Farben.' },
   { id: 'wald', name: 'Wald', short: 'Wald', desc: 'Pilze, Farne und Moos unter Bäumen.' },
 ];
 
@@ -23,6 +23,11 @@ const RAW = [
   ['calathea_lancifolia', 'Calathea lancifolia', 'pflanzenhandlung', 'leaf', []],
   ['kaktus', 'Kaktus', 'pflanzenhandlung', 'cactus', []],
   ['sukkulente', 'Sukkulente', 'pflanzenhandlung', 'succulent', []],
+  ['pilea', 'Pilea', 'pflanzenhandlung', 'leaf', []],
+  ['strelitzie', 'Strelitzie', 'pflanzenhandlung', 'leaf', []],
+  ['bonsai', 'Bonsai', 'pflanzenhandlung', 'leaf', []],
+  ['venusfliegenfalle', 'Venusfliegenfalle', 'pflanzenhandlung', 'succulent', []],
+  ['orchidee', 'Orchidee', 'pflanzenhandlung', 'flower', ['weiss', 'rosa', 'lila', 'gelb']],
   // Gewächshaus
   ['tomate', 'Tomate', 'gewaechshaus', 'veg', ['rot', 'gelb']],
   ['gurke', 'Gurke', 'gewaechshaus', 'veg', []],
@@ -30,6 +35,11 @@ const RAW = [
   ['melone', 'Melone', 'gewaechshaus', 'veg', []],
   ['kuerbis', 'Kürbis', 'gewaechshaus', 'veg', []],
   ['chili', 'Chili', 'gewaechshaus', 'veg', ['rot', 'gelb', 'orange']],
+  ['erdbeere', 'Erdbeere', 'gewaechshaus', 'berry', []],
+  ['paprika', 'Paprika', 'gewaechshaus', 'veg', ['rot', 'gelb', 'orange', 'gruen']],
+  ['aubergine', 'Aubergine', 'gewaechshaus', 'veg', []],
+  ['zucchini', 'Zucchini', 'gewaechshaus', 'veg', []],
+  ['mais', 'Mais', 'gewaechshaus', 'veg', []],
   // Blumenwiese
   ['gaensebluemchen', 'Gänseblümchen', 'blumenwiese', 'flower', []],
   ['mohn', 'Mohn', 'blumenwiese', 'flower', ['rot', 'orange', 'rosa', 'weiss']],
@@ -40,6 +50,11 @@ const RAW = [
   ['edelnelke', 'Edelnelke', 'blumenwiese', 'flower', ['rot', 'rosa', 'weiss']],
   ['rose', 'Rose', 'blumenwiese', 'flower', ['rot', 'rosa', 'weiss', 'gelb']],
   ['germini', 'Germini', 'blumenwiese', 'flower', ['rot', 'orange', 'rosa', 'gelb', 'weiss']],
+  ['tulpe', 'Tulpe', 'blumenwiese', 'flower', ['rot', 'gelb', 'rosa', 'weiss', 'orange', 'lila']],
+  ['vergissmeinnicht', 'Vergissmeinnicht', 'blumenwiese', 'flower', ['blau', 'rosa', 'weiss']],
+  ['fingerhut', 'Fingerhut', 'blumenwiese', 'flower', ['lila', 'weiss', 'rosa']],
+  ['mohnfeld', 'Mohnfeld', 'blumenwiese', 'flower', []],
+  ['pusteblume', 'Pusteblume', 'blumenwiese', 'flower', []],
   // Wald
   ['fliegenpilz', 'Fliegenpilz', 'wald', 'mushroom', []],
   ['steinpilz', 'Steinpilz', 'wald', 'mushroom', []],
@@ -49,6 +64,11 @@ const RAW = [
   ['efeu', 'Efeu', 'wald', 'leaf', []],
   ['heidelbeere', 'Heidelbeerstrauch', 'wald', 'berry', []],
   ['gluehmoos', 'Moospolster mit Glühpilzen', 'wald', 'glowmoss', []],
+  ['maigloeckchen', 'Maiglöckchen', 'wald', 'flower', []],
+  ['hexenring', 'Hexenring', 'wald', 'glowmoss', []],
+  ['walderdbeere', 'Walderdbeere', 'wald', 'berry', []],
+  ['baerlauch', 'Bärlauch', 'wald', 'leaf', []],
+  ['zunderschwamm', 'Zunderschwamm', 'wald', 'mushroom', []],
 ];
 
 export const PLANTS = RAW.map(([id, name, region, kind, variants]) => ({
@@ -69,5 +89,5 @@ export function plantsOfRegion(regionId) {
 
 export const VARIANT_LABELS = {
   rot: 'Rot', orange: 'Orange', rosa: 'Rosa', weiss: 'Weiß', gelb: 'Gelb',
-  blau: 'Blau', lila: 'Lila', rotbraun: 'Rotbraun',
+  blau: 'Blau', lila: 'Lila', rotbraun: 'Rotbraun', gruen: 'Grün',
 };

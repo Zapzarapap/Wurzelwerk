@@ -45,6 +45,11 @@ export const CONFIG = {
     alocasia_dragon_scale: 240,
     alocasia_black_velvet: 270,
     alocasia_jewel: 300,
+    pilea: 120,
+    venusfliegenfalle: 180,
+    orchidee: 210,
+    strelitzie: 240,
+    bonsai: 300,
     // Gewächshaus
     basilikum: 120,
     chili: 120,
@@ -52,6 +57,11 @@ export const CONFIG = {
     gurke: 150,
     kuerbis: 210,
     melone: 240,
+    erdbeere: 120,
+    zucchini: 150,
+    paprika: 180,
+    aubergine: 180,
+    mais: 210,
     // Blumenwiese
     gaensebluemchen: 90,
     mohn: 120,
@@ -62,6 +72,11 @@ export const CONFIG = {
     lilie: 210,
     sonnenblume: 210,
     rose: 270,
+    vergissmeinnicht: 90,
+    pusteblume: 120,
+    tulpe: 150,
+    fingerhut: 180,
+    mohnfeld: 240,
     // Wald
     farn: 90,
     efeu: 120,
@@ -71,6 +86,11 @@ export const CONFIG = {
     steinpilz: 240,
     fliegenpilz: 240,
     gluehmoos: 300,
+    walderdbeere: 120,
+    baerlauch: 120,
+    maigloeckchen: 150,
+    zunderschwamm: 210,
+    hexenring: 300,
   },
 
   // --- Sessions ------------------------------------------------------------
