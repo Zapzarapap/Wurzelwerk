@@ -3,7 +3,7 @@ REGION = "blumenwiese"
 
 from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT
 from parts import heart_leaf, stalk, meadow_ground
-from parts_blumenwiese import star_flower, seed_disc
+from parts_blumenwiese import ray_flower, seed_disc, stamp
 
 VARIANTS = {
     "gelb": None,
@@ -27,18 +27,24 @@ def leaf(sp, bx, by, ang, L, W):
     heart_leaf(sp.layer("leaf"), px, py, ang + 12 * (1 if math.cos(a) < 0 else -1), L, W, midrib=True, vein=SHADE)
 
 
+BUD = [".l.l.b.",
+       "lhlhlbs",
+       "hlhlbbs",
+       "lhbbbss",
+       ".lbbss.",
+       "..s.s.."]
+
+
 def head(sp, x, y, R, disc):
-    star_flower(sp, "petal_yellow", x, y, disc + 1.2, R, 13, ysc=0.9, p=0.9, valley=0.7, rot=0.3)
-    seed_disc(sp, "soil", x, y, disc, disc * 0.9)
+    ray_flower(sp, "petal_yellow", x, y, R, disc, 15, ysc=0.92, rot=0.25, notch=0.32, groove=0.17, inner_dark=0.6)
+    seed_disc(sp, "soil", x, y, disc, disc * 0.92)
 
 
 def bud(sp, x, y, r, open_=False):
+    """Knospe mit spitzen Hüllblättern; open_: erste gelbe Blütenblätter schauen hervor."""
     if open_:
-        star_flower(sp, "petal_yellow", x, y - 1, r * 0.8, r * 1.7, 9, ysc=0.9, p=0.9, valley=0.5)
-    b = sp.layer("leaf")
-    b.ellipse(x, y + 0.5, r, r * 0.95)
-    hl = sp.layer("leaf", outline=False, shading=False)
-    hl.px(int(x - r * 0.5), int(y - r * 0.3), HIGHLIGHT)
+        ray_flower(sp, "petal_yellow", x + 0.5, y, r * 1.9, r * 0.8, 12, ysc=0.9, notch=0.3, groove=0.12)
+    stamp(sp, x + 0.5, y + 0.5, BUD, "leaf")
 
 
 def draw(stage: int) -> Sprite:
@@ -73,5 +79,5 @@ def draw(stage: int) -> Sprite:
         leaf(sp, 15, 21, -150, 6, 3.0)
         leaf(sp, 15, 19, -35, 5.5, 2.8)
         bud(sp, 25, 19, 2.4, open_=False)
-        head(sp, 14, 9, 8.2, 3.4)
+        head(sp, 14.5, 9.5, 8.6, 3.6)
     return sp

@@ -5,7 +5,7 @@ import math
 
 from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT
 from parts import stalk, meadow_ground
-from parts_blumenwiese import star_flower, narrow_leaf
+from parts_blumenwiese import narrow_leaf, stamp
 
 BY = 29
 
@@ -28,22 +28,43 @@ BUDS = {
 }
 
 
-def daisy(sp, x, y, r):
-    lay = star_flower(sp, "petal_white", x, y, r * 0.6, r, 8, ysc=0.82, p=0.55, valley=0.8, rot=0.3)
-    tips = sp.layer("petal_pink", outline=False, shading=False)
-    for (px, py) in lay.pixels:
-        if math.hypot(px + 0.5 - x, (py + 0.5 - y) / 0.82) > r * 0.74:
-            tips.px(px, py, BASE)
-    c = sp.layer("petal_yellow", outline=False, shading=False)
-    rc = max(1.0, r * 0.34)
-    c.ellipse(x, y, rc, rc * 0.85, tone=BASE)
-    c.px(int(math.floor(x - 0.5)), int(math.floor(y - 0.5)), LIGHT)
+Y = {"y": ("petal_yellow", BASE), "Y": ("petal_yellow", HIGHLIGHT), "d": ("petal_yellow", SHADE),
+     "p": ("petal_pink", LIGHT), "P": ("petal_pink", BASE)}
+
+# Blütenköpfe, leicht von oben: strahlend weiße Zungenblüten mit kleinen Kerben
+# am Rand, gelbes Körbchen, an der Unterseite ein Hauch Rosa.
+DAISY = {
+    "S": [".h.h.",
+          "hhlhl",
+          "lhylb",
+          "llhbl",
+          ".p.p."],
+    "M": ["..h.hh..",
+          ".hshlsh.",
+          "hlhYyhlh",
+          "lhlydlhs",
+          ".shlhls.",
+          "..pl.p.."],
+    "L": ["...h.hh...",
+          ".hhlshlhh.",
+          "hshlhlhlsh",
+          "lhlhYyhlhl",
+          "hlhYyydlhs",
+          ".shlydhls.",
+          ".lhlslhbl.",
+          "..pl.lp.b."],
+}
+
+
+def daisy(sp, x, y, r, flip=False):
+    size = "S" if r < 3 else ("M" if r < 3.8 else "L")
+    stamp(sp, x, y, DAISY[size], "bw_white", Y, flip=flip)
 
 
 def bud(sp, x, y):
     c = sp.layer("leaf")
     c.ellipse(x, y + 1.6, 1.3, 1.0)
-    b = sp.layer("petal_white")
+    b = sp.layer("bw_white")
     b.ellipse(x, y, 1.5, 1.7)
     t = sp.layer("petal_pink", outline=False, shading=False)
     t.px(x - 1, y - 1, BASE)

@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-14T17:59:57Z",
+ "generated": "2026-11-14T18:00:57Z",
  "species": {
   "alocasia_black_velvet": {
    "default": true,
@@ -108,6 +108,27 @@
     "stage5"
    ],
    "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "baerlauch": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "wald",
    "stages": [
     1,
     2,
@@ -636,6 +657,34 @@
    ],
    "variants": []
   },
+  "hexenring": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage3_glow",
+    "stage4",
+    "stage4_glow",
+    "stage5",
+    "stage5_glow"
+   ],
+   "glow": [
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "nofoot": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
   "kaktus": {
    "default": false,
    "files": [
@@ -851,6 +900,35 @@
     "orange",
     "rosa",
     "rot",
+    "weiss"
+   ]
+  },
+  "maigloeckchen": {
+   "default": false,
+   "files": [
+    "stage1_rosa",
+    "stage1_weiss",
+    "stage2_rosa",
+    "stage2_weiss",
+    "stage3_rosa",
+    "stage3_weiss",
+    "stage4_rosa",
+    "stage4_weiss",
+    "stage5_rosa",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "rosa",
     "weiss"
    ]
   },
@@ -1381,6 +1459,27 @@
     "weiss"
    ]
   },
+  "walderdbeere": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
   "zucchini": {
    "default": true,
    "files": [
@@ -1404,6 +1503,27 @@
     "stage5"
    ],
    "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "zunderschwamm": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "nofoot": [],
+   "region": "wald",
    "stages": [
     1,
     2,

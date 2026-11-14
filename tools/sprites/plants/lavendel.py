@@ -1,50 +1,80 @@
-"""Lavendel – Blumenwiese. Buschig, graugrüne Nadelblätter, Blütenähren."""
+"""Lavendel – Blumenwiese. Buschiger graugrüner Unterbau aus Nadelblättern, darüber
+lange kahle Stiele mit Blütenquirlen in Etagen (unten mit Lücken, oben dichter)."""
 REGION = "blumenwiese"
 
-from pixel import Sprite, SHADE, BASE, LIGHT
-from parts import stalk, meadow_ground
-from parts_blumenwiese import spike, leaf_line
+import math
+
+from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT
+from parts import heart_leaf, stalk, meadow_ground
+from parts_blumenwiese import stamp
 
 VARIANTS = {
     "lila": None,
-    "weiss": {"bw_lavender": "petal_white"},
+    "weiss": {"bw_lavender": "bw_white"},
     "rosa": {"bw_lavender": "petal_pink"},
 }
 
 BY = 29
 
-# Ähren: (Stielfuß x, Ähren-Fuß x, y, Spitze x, y, Biegung)
+# Blütenquirle: breit unten, schmal oben, Spitze als kleines Knöpfchen
+WHORL = {
+    3: ["hlb", "lbs"],
+    2: ["hl", "bs"],
+    1: ["l", "s"],
+}
+
+
+def spike(sp, x, y_top, tiers, base_x=None, base_y=BY - 3, bend=0.0):
+    """Stiel von (base_x, base_y) bis zur Ähre, Ähre aus Quirlen. tiers: [(breite, lücke danach)] von unten."""
+    h = sum(2 + g for (_, g) in tiers)
+    y_bot = y_top + h
+    bx = x if base_x is None else base_x
+    stalk(sp, bx, base_y, x, y_bot, bend=bend, ramp="leaf_sage", tone=SHADE)
+    stalk(sp, x, y_bot, x, y_top + 1, ramp="leaf_sage", tone=SHADE)
+    y = y_bot
+    for (w, gap) in tiers:
+        art = WHORL[w]
+        stamp(sp, x + (0.5 if w % 2 else 0.0) + (0 if w > 1 else 0.5) - (0 if w % 2 else 0), y - 1, art, "bw_lavender")
+        y -= 2 + gap
+
+
+def bush(sp, n, spread, height):
+    """Niedriger, runder Busch: viele schmale graugrüne Blättchen als eine Masse
+    (nur außen Outline), innen helle und dunkle Nadel-Striche."""
+    mass = sp.layer("leaf_sage")
+    det = sp.layer("leaf_sage", outline=False, shading=False)
+    for i in range(n):
+        t = (i + 0.5) / n
+        ang = -172 + 164 * t + (8 if i % 2 else -8)
+        L = height * (0.55 + 0.45 * math.sin(math.pi * t)) * (0.8 if i % 3 == 1 else 1.0)
+        bx = 15.5 + (t - 0.5) * spread
+        heart_leaf(mass, bx, BY, ang, L, 1.1, notch=False, midrib=False)
+        a = math.radians(ang)
+        tone = HIGHLIGHT if (i % 3 == 0 and math.cos(a) < 0.3) else (LIGHT if i % 3 != 2 else SHADE)
+        for k in range(2, int(L) - 1):
+            det.px(int(math.floor(bx + math.cos(a) * k)), int(math.floor(BY + math.sin(a) * k)), tone)
+
+
+# Ähren je Stufe: (x, Spitze y, Quirle, Fuß x, Biegung)
+TALL = [(3, 3), (3, 3), (3, 1), (2, 1), (2, 0), (1, 0)]
+MID = [(3, 3), (3, 2), (2, 1), (2, 0), (1, 0)]
+SHORT = [(3, 3), (2, 1), (2, 0), (1, 0)]
+TINY = [(2, 2), (2, 0), (1, 0)]
+
 SPIKES = {
-    3: [(15, 15, 18, 15, 13, 0)],
-    4: [(15, 15, 15, 15, 7, 0.3), (17, 21, 17, 22, 10, 0.5), (14, 9, 18, 8, 12, -0.5)],
-    5: [(14, 14, 16, 14, 6, 0.3), (17, 21, 15, 22, 4, 0.5), (15, 8, 18, 6, 10, -0.6),
-        (18, 26, 21, 27, 13, 0.6), (13, 3, 24, 3, 17, -0.4)],
+    3: [(16, 9, TINY, 16, 0)],
+    4: [(15, 3, MID, 15, 0), (21, 7, SHORT, 17, 1), (10, 8, SHORT, 14, -1)],
+    5: [(15, 2, TALL, 15, 0), (21, 3, MID, 17, 1), (9, 5, MID, 14, -1),
+        (26, 9, SHORT, 18, 1.5), (5, 11, SHORT, 13, -1.5)],
 }
-
-
-def blades(sp, spec):
-    for (bx, tx, ty, bend, tone) in spec:
-        leaf_line(sp, bx, BY, tx, ty, bend=bend, tone=tone)
-
-
-BLADES = {
-    1: [(15, 13, 25, -1, BASE), (16, 18, 26, 1, LIGHT), (16, 16, 24, 0, BASE)],
-    2: [(14, 8, 22, -2, BASE), (16, 22, 22, 2, LIGHT), (15, 14, 20, -1, BASE), (17, 19, 19, 1, BASE), (16, 16, 18, 0, LIGHT)],
-    3: [(14, 7, 21, -2, BASE), (17, 24, 21, 2, LIGHT), (15, 12, 18, -1, BASE), (17, 20, 17, 1, BASE), (16, 15, 15, 0, LIGHT), (15, 10, 23, -1, LIGHT)],
-    4: [(14, 5, 22, -2, BASE), (17, 26, 22, 2, LIGHT), (15, 10, 19, -1, BASE), (17, 22, 19, 1, BASE), (16, 16, 18, 0, LIGHT), (15, 8, 24, -1, LIGHT), (18, 24, 25, 1, BASE)],
-    5: [(14, 4, 23, -2, BASE), (17, 27, 23, 2, LIGHT), (15, 9, 20, -1, BASE), (17, 23, 20, 1, BASE), (16, 16, 19, 0, LIGHT), (15, 7, 25, -1, LIGHT), (18, 25, 26, 1, BASE), (13, 12, 18, -1, BASE)],
-}
+BUSH = {1: (5, 5, 4), 2: (8, 9, 6), 3: (10, 12, 7), 4: (12, 15, 8), 5: (14, 18, 9)}
 
 
 def draw(stage: int) -> Sprite:
     sp = Sprite()
     meadow_ground(sp)
-    for (sx, bx, by, tx, ty, bend) in SPIKES.get(stage, []):
-        stalk(sp, sx, BY, bx, by, bend=(bx - sx) * -0.2)
-    blades(sp, BLADES[stage])
-    for (sx, bx, by, tx, ty, bend) in SPIKES.get(stage, []):
-        if stage == 3:
-            spike(sp, "bw_lavender", bx, by, tx, ty, w=1.1, step=2.0, bend=bend)
-        else:
-            spike(sp, "bw_lavender", bx, by, tx, ty, w=1.35, step=2.1, bend=bend)
+    for (x, yt, tiers, fx, bend) in sorted(SPIKES.get(stage, []), key=lambda s: abs(s[0] - 15.5), reverse=True):
+        spike(sp, x, yt, tiers, base_x=fx, bend=bend)
+    n, spread, height = BUSH[stage]
+    bush(sp, n, spread, height)
     return sp

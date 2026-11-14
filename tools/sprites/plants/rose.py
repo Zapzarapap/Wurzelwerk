@@ -5,12 +5,12 @@ import math
 
 from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT
 from parts import heart_leaf, stalk, meadow_ground
-from parts_blumenwiese import rose_bloom
+from parts_blumenwiese import stamp
 
 VARIANTS = {
     "rot": None,
     "rosa": {"petal_red": "petal_pink"},
-    "weiss": {"petal_red": "petal_white"},
+    "weiss": {"petal_red": "bw_white"},
     "gelb": {"petal_red": "petal_yellow"},
     "orange": {"petal_red": "petal_orange"},
 }
@@ -18,15 +18,56 @@ VARIANTS = {
 BY = 29
 
 
+# Rosenblüten als Kelch von schräg vorn: wellige Oberkante, eingerollte Mitte
+# (Spirale), helle Blütenblatt-Ränder, unten schmaler zulaufend.
+BLOOM = {
+    "S": [".lhl.",
+          "lbosb",
+          "lslbs",
+          ".lbs.",
+          "..s.."],
+    "M": [".lh.hl.",
+          "lhboobl",
+          "lbslsbs",
+          "lslssbs",
+          ".lbbbs.",
+          "..sss.."],
+    "L": ["..lh.hhl.",
+          ".lhbllbbl",
+          "lhsoossbs",
+          "lbslhlosb",
+          "lbsosbsbs",
+          ".lllbsbs.",
+          "..sbbbs..",
+          "...sss..."],
+    "XL": ["..lh..hl...",
+           ".lhbllhbbl.",
+           "lhbsooosbbl",
+           "lbsolhlosbs",
+           "lbsoslsosbs",
+           ".lbsoosbbs.",
+           ".llbsslbsb.",
+           "..llbbbss..",
+           "...ssss...."],
+}
+BUD = ["..l..",
+       ".lhb.",
+       ".lbs.",
+       ".lbs.",
+       "..s.."]
+SEPALS = ["l.b.b",
+          ".lbs."]
+
+
 def leaflet(sp, x, y, ang, L):
-    heart_leaf(sp.layer("leaf"), x, y, ang, L, L * 0.42, notch=False, midrib=False)
+    heart_leaf(sp.layer("bw_roseleaf"), x, y, ang, L, L * 0.45, notch=False, midrib=L >= 4, vein=SHADE)
 
 
 def leaf_group(sp, x, y, ang, s=1.0):
     """Gefiedertes Rosenblatt: Stiel mit Endblättchen und zwei Seitenblättchen."""
     a = math.radians(ang)
     ex, ey = x + math.cos(a) * 4.5 * s, y + math.sin(a) * 4.5 * s
-    stalk(sp, x, y, ex, ey)
+    stalk(sp, x, y, ex, ey, ramp="bw_roseleaf")
     mx, my = x + math.cos(a) * 2.2 * s, y + math.sin(a) * 2.2 * s
     leaflet(sp, mx, my, ang - 65, 3.2 * s)
     leaflet(sp, mx, my, ang + 65, 3.2 * s)
@@ -34,20 +75,15 @@ def leaf_group(sp, x, y, ang, s=1.0):
 
 
 def bud(sp, x, y, s=1.0):
-    sep = sp.layer("leaf")
-    sep.ellipse(x, y + 2.4 * s, 2.0 * s, 1.3 * s)
-    b = sp.layer("petal_red")
-    b.ellipse(x, y, 1.9 * s, 2.6 * s)
-    sw = sp.layer("petal_red", outline=False, shading=False)
-    sw.px(int(x), int(y - 1), SHADE)
-    sw.px(int(x), int(y), SHADE)
-    sw.px(int(x - 1), int(y), LIGHT)
+    stamp(sp, x + 0.5, y, BUD, "petal_red")
+    stamp(sp, x + 0.5, y + 2.5, SEPALS, "bw_roseleaf")
 
 
 def bloom(sp, x, y, r):
-    sep = sp.layer("leaf")
-    sep.ellipse(x, y + r * 0.9, r * 0.55, 1.6)
-    rose_bloom(sp, "petal_red", x, y, r)
+    size = "S" if r < 3 else ("M" if r < 4 else ("L" if r < 5 else "XL"))
+    h = len(BLOOM[size])
+    stamp(sp, x + 0.5, y + h / 2 + 0.5, ["lbbs"], "bw_roseleaf")  # Kelchblätter
+    stamp(sp, x + 0.5, y + 0.5, BLOOM[size], "petal_red")
 
 
 def draw(stage: int) -> Sprite:
@@ -86,9 +122,11 @@ def draw(stage: int) -> Sprite:
         stalk(sp, 16, 25, 20, 13, bend=1.5)
         leaf_group(sp, 15, 27, -168, 1.2)
         leaf_group(sp, 16, 26, -15, 1.2)
-        leaf_group(sp, 14, 20, -150, 1.0)
-        leaf_group(sp, 17, 20, -30, 1.0)
+        leaf_group(sp, 14, 20, -150, 1.1)
+        leaf_group(sp, 17, 19, -35, 1.1)
         leaf_group(sp, 12, 25, 160, 0.8)
+        leaf_group(sp, 16, 24, -92, 1.25)
+        leaflet(sp, 17, 28, -60, 3.6)
         bud(sp, 20, 10, 0.95)
         bloom(sp, 24, 17, 3.6)
         bloom(sp, 8, 20, 3.6)

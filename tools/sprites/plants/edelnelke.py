@@ -5,53 +5,70 @@ import math
 
 from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT
 from parts import stalk, meadow_ground
-from parts_blumenwiese import star_flower, leaf_line
+from parts_blumenwiese import stamp, leaf_line
 
 VARIANTS = {
     "rot": None,
     "rosa": {"petal_red": "petal_pink"},
-    "weiss": {"petal_red": "petal_white"},
+    "weiss": {"petal_red": "bw_white"},
     "gelb": {"petal_red": "petal_yellow"},
 }
 
 BY = 29
 
 
+HEAD = {
+    "L": ["..h.l.h..",
+          ".hlhlhlb.",
+          "hlhlblbsb",
+          "lbslbsbss",
+          ".lblbsbs.",
+          "..sbsbs.."],
+    "M": [".h.l.b.",
+          "hlhlbsb",
+          "lblsbss",
+          ".lbsbs."],
+}
+CALYX = {"L": ["lbs", "lbs", "lbs"], "M": ["lbs", "lbs"]}
+BUD = [".h.",
+       "lbs",
+       "lbs",
+       "lbs",
+       ".b."]
+
+
 def stem(sp, x0, y0, x1, y1, bend=0.0, pairs=2):
-    stalk(sp, x0, y0, x1, y1, bend=bend)
+    """Stängel mit Knoten und gegenständigen, schmalen blaugrünen Blattpaaren."""
+    stalk(sp, x0, y0, x1, y1, bend=bend, ramp="bw_glaucous", tone=BASE)
     for i in range(pairs):
         t = 0.28 + 0.27 * i
         lx = x0 + (x1 - x0) * t + bend * 0.5
         ly = y0 + (y1 - y0) * t
-        leaf_line(sp, lx, ly, lx - 4, ly - 2 - i, bend=0.5, tone=BASE)
-        leaf_line(sp, lx, ly, lx + 4, ly - 3 + i, bend=-0.5, tone=LIGHT)
-        sp.layer("stem", outline=False, shading=False).px(round(lx), round(ly), LIGHT)  # Knoten
+        leaf_line(sp, lx, ly, lx - 4, ly - 2 - i, bend=0.5, ramp="bw_glaucous", tone=LIGHT)
+        leaf_line(sp, lx, ly, lx + 4, ly - 3 + i, bend=-0.5, ramp="bw_glaucous", tone=BASE)
+        sp.layer("bw_glaucous", outline=False, shading=False).px(round(lx), round(ly), HIGHLIGHT)  # Knoten
 
 
 def blades(sp, n, L):
+    """Grasartiges Polster aus schmalen, bereiften Blättern (kräftiger als bei der Kornblume)."""
     spec = [(14, -4, 1), (17, 5, 1), (16, 1, 0.8), (13, -6, 0.7), (18, 7, 0.7), (15, -2, 0.9)][:n]
     for (bx, dx, k) in spec:
-        leaf_line(sp, bx, BY, bx + dx * k * L / 5, BY - L * k, bend=dx * 0.25, tone=LIGHT if bx % 2 else BASE)
+        x1, y1 = bx + dx * k * L / 5, BY - L * k
+        leaf_line(sp, bx, BY, x1, y1, bend=dx * 0.25, ramp="bw_glaucous", tone=LIGHT if bx % 2 else BASE)
+        leaf_line(sp, bx + 1, BY, x1 + (1 if dx >= 0 else 0), y1 + 1, bend=dx * 0.25, ramp="bw_glaucous", tone=SHADE)
 
 
 def bud(sp, x, y):
-    c = sp.layer("leaf")
-    c.ellipse(x, y + 0.5, 1.6, 2.2)
+    stamp(sp, x + 0.5, y + 0.5, BUD, "bw_glaucous")
     t = sp.layer("petal_red", outline=False, shading=False)
-    t.px(int(x - 1), int(y - 2), BASE)
-    t.px(int(x), int(y - 2), LIGHT)
-    t.px(int(x), int(y - 3), BASE)
+    t.px(int(x), int(y) - 2, LIGHT)
 
 
 def carnation(sp, x, y, r):
-    cal = sp.layer("leaf")
-    cal.ellipse(x, y + r * 0.75, 1.5, 2.2)
-    star_flower(sp, "petal_red", x, y, r * 0.72, r, 9, ysc=0.78, p=1.6, valley=0.6, rot=0.4)
-    d = sp.layer("petal_red", outline=False, shading=False)
-    d.px(int(math.floor(x)), int(math.floor(y)), SHADE)
-    d.px(int(math.floor(x - 1)), int(math.floor(y - 1)), HIGHLIGHT)
-    d.px(int(math.floor(x - r * 0.6)), int(math.floor(y - r * 0.2)), HIGHLIGHT)
-    d.px(int(math.floor(x + r * 0.4)), int(math.floor(y + r * 0.3)), SHADE)
+    size = "L" if r >= 4.4 else "M"
+    h = len(HEAD[size])
+    stamp(sp, x + 0.5, y + h / 2 + len(CALYX[size]) / 2 - 0.5, CALYX[size], "bw_glaucous")
+    stamp(sp, x + 0.5, y, HEAD[size], "petal_red")
 
 
 def draw(stage: int) -> Sprite:

@@ -4,13 +4,13 @@ REGION = "blumenwiese"
 import math
 
 from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT
-from parts import stalk, meadow_ground
+from parts import heart_leaf, stalk, meadow_ground
 from parts_blumenwiese import star_flower, leaf_line
 
 VARIANTS = {
     "blau": None,
     "rosa": {"petal_blue": "petal_pink"},
-    "weiss": {"petal_blue": "petal_white"},
+    "weiss": {"petal_blue": "bw_white"},
     "lila": {"petal_blue": "petal_purple"},
 }
 
@@ -24,14 +24,14 @@ def stem(sp, x0, y0, x1, y1, bend=0.0, leaves=2, side=1):
         lx = x0 + (x1 - x0) * t + bend * 0.5
         ly = y0 + (y1 - y0) * t
         s = side if i % 2 == 0 else -side
-        leaf_line(sp, lx, ly, lx + s * 4, ly - 3, bend=-s * 0.6)
+        leaf_line(sp, lx, ly, lx + s * 4, ly - 3, bend=-s * 0.6, tone=SHADE)
 
 
 def blades(sp, n, L):
-    spec = [(14, -3, 1), (17, 4, 1), (16, 0, 0.8), (13, -5, 0.7), (18, 6, 0.75)][:n]
-    for (bx, dx, k) in spec:
-        leaf_line(sp, bx, BY, bx + dx * k * L / 4, BY - L * k, bend=dx * 0.2,
-                  tone=LIGHT if bx % 2 else BASE)
+    """Schmale, graugrüne, lanzettliche Grundblätter mit Outline (locker, nicht so dicht wie bei der Nelke)."""
+    spec = [(14, -118, 1), (17, -62, 1), (16, -88, 0.8), (13, -140, 0.75), (18, -38, 0.75)][:n]
+    for (bx, ang, k) in spec:
+        heart_leaf(sp.layer("leaf_sage"), bx, BY, ang, L * k, 0.95, notch=False, midrib=False)
 
 
 def bud(sp, x, y):

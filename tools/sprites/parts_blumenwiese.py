@@ -104,3 +104,99 @@ def narrow_leaf(sp, ramp, bx, by, angle, L, W=1.2):
 def leaf_line(sp, x0, y0, x1, y1, bend=0.0, ramp="leaf_sage", tone=BASE):
     """Schmales Blatt als 1-px-Linie (Kornblume, Lavendel, Nelke)."""
     return stalk(sp, x0, y0, x1, y1, bend=bend, ramp=ramp, tone=tone)
+
+
+# --- Handgezeichnete Pixel-Stempel ---------------------------------------
+STAMP_TONES = {"o": OUTLINE, "s": SHADE, "b": BASE, "l": LIGHT, "h": HIGHLIGHT}
+
+
+def stamp(sp, x, y, art, ramp, extra=None, outline=True, flip=False, out_ramp=None):
+    """Kleines handgezeichnetes Motiv (Blütenkopf, Glocke …) pixelgenau setzen.
+
+    art:   Liste gleich langer Strings, Mitte des Motivs landet auf (x, y).
+           o/s/b/l/h = Ton der Hauptrampe, '.' oder ' ' = leer.
+    extra: {zeichen: (rampe, ton)} für weitere Materialien (Blütenmitte, Flecken …).
+           Diese Pixel gehören zur Silhouette (gemeinsame Outline), werden aber
+           in ihrer eigenen Rampe gefärbt.
+    flip:  horizontal spiegeln (für Abwechslung bei symmetrischen Motiven).
+    out_ramp: Rampe, deren Outline-Farbe die Silhouette bekommt (Standard: ramp).
+    """
+    extra = extra or {}
+    h, w = len(art), max(len(r) for r in art)
+    x0, y0 = int(round(x - w / 2)), int(round(y - h / 2))
+    sil = sp.layer(out_ramp or ramp, outline=outline, shading=False)
+    layers = {}
+    for j, row in enumerate(art):
+        for i, ch in enumerate(row):
+            if ch in ". ":
+                continue
+            px = x0 + ((w - 1 - i) if flip else i)
+            py = y0 + j
+            if ch in STAMP_TONES:
+                if out_ramp and out_ramp != ramp:
+                    sil.px(px, py, BASE)
+                    if ramp not in layers:
+                        layers[ramp] = sp.layer(ramp, outline=False, shading=False)
+                    layers[ramp].px(px, py, STAMP_TONES[ch])
+                else:
+                    sil.px(px, py, STAMP_TONES[ch])
+            elif ch in extra:
+                r, t = extra[ch]
+                sil.px(px, py, BASE)
+                if r not in layers:
+                    layers[r] = sp.layer(r, outline=False, shading=False)
+                layers[r].px(px, py, t)
+    return sil
+
+
+def ray_flower(sp, ramp, x, y, R, rc, n, ysc=0.9, rot=0.0, notch=0.2, groove=0.1, inner_dark=1.0):
+    """Klare Strahlenblüte (Gerbera, Sonnenblume): n Zungenblüten mit Kerben an
+    den Spitzen und dunklen Rillen dazwischen, Licht von oben links.
+
+    (x, y) ist die Blütenmitte in Pixelkoordinaten (Pixelmitte = x + 0.5).
+    rc: Radius der Mitte (wird hier nicht gezeichnet, nur die Zone um sie abgedunkelt).
+    """
+    lay = sp.layer(ramp, shading=False)
+    Ri = int(R) + 2
+    for py in range(int(y - Ri), int(y + Ri) + 1):
+        for px in range(int(x - Ri), int(x + Ri) + 1):
+            dx, dy = px + 0.5 - x, (py + 0.5 - y) / ysc
+            d = math.hypot(dx, dy)
+            if d > R:
+                continue
+            f = (n * (math.atan2(dy, dx) / (2 * math.pi)) + rot) % 1.0
+            edge = min(f, 1 - f)
+            if d > R - 1.4 and edge < notch:
+                continue
+            lit = -(dx + dy) / max(d, 0.01)
+            tone = LIGHT if lit > 0.3 else (SHADE if lit < -0.45 else BASE)
+            if edge < groove and d > rc + 0.6:
+                tone = SHADE if tone >= BASE else OUTLINE
+            if d < rc + inner_dark:
+                tone = min(tone, BASE) - (1 if d < rc + 0.5 else 0)
+            if lit > 0.75 and d > R * 0.6 and edge > 0.38:
+                tone = HIGHLIGHT
+            lay.px(px, py, max(OUTLINE, tone))
+    return lay
+
+
+def eye(sp, x, y, rc, ysc=0.9, ramp="dark", ring=None):
+    """Dunkle Blütenmitte mit Lichtpunkt oben links, optional Pollenring (ring=Rampe)."""
+    c = sp.layer(ramp, shading=False)
+    Ri = int(rc) + 2
+    for py in range(int(y - Ri), int(y + Ri) + 1):
+        for px in range(int(x - Ri), int(x + Ri) + 1):
+            dx, dy = px + 0.5 - x, (py + 0.5 - y) / ysc
+            d = math.hypot(dx, dy)
+            if d <= rc:
+                lit = -(dx + dy) / max(d, 0.01)
+                c.px(px, py, LIGHT if (d > rc - 1 and lit > 0.4) else (SHADE if (d > rc - 1 and lit < -0.4) else BASE))
+    hx, hy = int(math.floor(x - rc * 0.45)), int(math.floor(y - rc * 0.45 * ysc))
+    c.px(hx, hy, HIGHLIGHT)
+    if ring:
+        r = sp.layer(ring, outline=False, shading=False)
+        for (px, py) in list(c.pixels):
+            dx, dy = px + 0.5 - x, (py + 0.5 - y) / ysc
+            if rc - 1.0 < math.hypot(dx, dy) <= rc and (px + py) % 2 == 0:
+                r.px(px, py, LIGHT if dx + dy < 0 else BASE)
+    return c
