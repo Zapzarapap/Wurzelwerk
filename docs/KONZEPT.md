@@ -65,10 +65,10 @@ Zimmerpflanzen in Töpfen, Regale, Tische, Hängeampeln.
 - Monstera
 - Alocasia Black Velvet
 - Alocasia Dragon Scale
-- Jewel Alocasia *(Sorte offen – Vorschlag: Alocasia cuprea „Red Secret“)*
+- Jewel Alocasia *(Aussehen: nach Referenzbild von Niklas)*
 - Mask Alocasia (Alocasia amazonica „Polly“)
-- Calathea 1 *(offen – Vorschlag: Calathea orbifolia)*
-- Calathea 2 *(offen – Vorschlag: Calathea lancifolia)*
+- Calathea orbifolia
+- Calathea lancifolia
 - Kaktus
 - Sukkulente (Echeverie)
 
@@ -110,5 +110,5 @@ Pilze in Gruppen unter Bäumen, Lichtungen.
 
 - Token-Ökonomie: Kurs (Tokens pro Minute), Preise für Pflanzen und Regionen
 - Start-Pflanzen pro Region
-- Konkrete Sorten für Jewel Alocasia und die zwei Calatheen
+- Referenzbilder für die Alocasien
 - Gesamt-Ansicht im Garten ja/nein

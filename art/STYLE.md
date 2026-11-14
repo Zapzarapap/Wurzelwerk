@@ -29,6 +29,15 @@ Gilt für **alle** Sprites, damit der Look einheitlich bleibt, egal wer zeichnet
 - Dünne Stiele: 1 px, ohne Outline (`parts.stalk`).
 - Lieber wenige, klar lesbare Formen als viele kleine. Auch bei 1× Zoom muss die Art erkennbar sein.
 
+## Blattpflanzen (Monstera, Alocasia, Calathea …)
+
+- Blätter **nicht nebeneinander aufreihen**, sondern natürlich wirken lassen:
+  - unterschiedliche Größen (junge Blätter klein, alte groß)
+  - Überlappungen, vordere Blätter verdecken hintere
+  - unterschiedliche Höhen und Neigungen, einzelne Blätter hängen nach außen über
+  - asymmetrisch, keine Spiegel-Anordnung
+  - Stiele kreuzen sich teilweise
+
 ## Dateien
 
 - Code: `tools/sprites/plants/<art>.py` mit `REGION`, `draw(stage)` und optional `VARIANTS`.
