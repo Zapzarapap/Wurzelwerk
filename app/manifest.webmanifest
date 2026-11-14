@@ -1,0 +1,17 @@
+{
+  "name": "Wurzelwerk",
+  "short_name": "Wurzelwerk",
+  "description": "Lernzeit-Tracker mit cosy Pixel-Garten",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3ead8",
+  "theme_color": "#f3ead8",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

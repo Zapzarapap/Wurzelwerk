@@ -1,0 +1,860 @@
+{
+ "generated": "2026-11-14T17:14:19Z",
+ "species": {
+  "alocasia_black_velvet": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "alocasia_dragon_scale": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "alocasia_jewel": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "alocasia_mask": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "basilikum": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "butterpilz": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "calathea_lancifolia": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "calathea_orbifolia": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "chili": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_gruen",
+    "stage1_rot",
+    "stage2_gelb",
+    "stage2_gruen",
+    "stage2_rot",
+    "stage3_gelb",
+    "stage3_gruen",
+    "stage3_rot",
+    "stage4_gelb",
+    "stage4_gruen",
+    "stage4_rot",
+    "stage5_gelb",
+    "stage5_gruen",
+    "stage5_rot"
+   ],
+   "glow": [],
+   "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "gruen",
+    "rot"
+   ]
+  },
+  "edelnelke": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_rosa",
+    "stage1_rot",
+    "stage1_weiss",
+    "stage2_gelb",
+    "stage2_rosa",
+    "stage2_rot",
+    "stage2_weiss",
+    "stage3_gelb",
+    "stage3_rosa",
+    "stage3_rot",
+    "stage3_weiss",
+    "stage4_gelb",
+    "stage4_rosa",
+    "stage4_rot",
+    "stage4_weiss",
+    "stage5_gelb",
+    "stage5_rosa",
+    "stage5_rot",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "rosa",
+    "rot",
+    "weiss"
+   ]
+  },
+  "efeu": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "farn": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "fliegenpilz": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "gaensebluemchen": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "germini": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_orange",
+    "stage1_rosa",
+    "stage1_rot",
+    "stage1_weiss",
+    "stage2_gelb",
+    "stage2_orange",
+    "stage2_rosa",
+    "stage2_rot",
+    "stage2_weiss",
+    "stage3_gelb",
+    "stage3_orange",
+    "stage3_rosa",
+    "stage3_rot",
+    "stage3_weiss",
+    "stage4_gelb",
+    "stage4_orange",
+    "stage4_rosa",
+    "stage4_rot",
+    "stage4_weiss",
+    "stage5_gelb",
+    "stage5_orange",
+    "stage5_rosa",
+    "stage5_rot",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "orange",
+    "rosa",
+    "rot",
+    "weiss"
+   ]
+  },
+  "gluehmoos": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage1_glow",
+    "stage2",
+    "stage2_glow",
+    "stage3",
+    "stage3_glow",
+    "stage4",
+    "stage4_glow",
+    "stage5",
+    "stage5_glow"
+   ],
+   "glow": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "gurke": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "heidelbeere": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "kaktus": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_rosa",
+    "stage2_gelb",
+    "stage2_rosa",
+    "stage3_gelb",
+    "stage3_rosa",
+    "stage4_gelb",
+    "stage4_rosa",
+    "stage5_gelb",
+    "stage5_rosa"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "rosa"
+   ]
+  },
+  "kornblume": {
+   "default": false,
+   "files": [
+    "stage1_blau",
+    "stage1_lila",
+    "stage1_rosa",
+    "stage1_weiss",
+    "stage2_blau",
+    "stage2_lila",
+    "stage2_rosa",
+    "stage2_weiss",
+    "stage3_blau",
+    "stage3_lila",
+    "stage3_rosa",
+    "stage3_weiss",
+    "stage4_blau",
+    "stage4_lila",
+    "stage4_rosa",
+    "stage4_weiss",
+    "stage5_blau",
+    "stage5_lila",
+    "stage5_rosa",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "blau",
+    "lila",
+    "rosa",
+    "weiss"
+   ]
+  },
+  "kuerbis": {
+   "default": false,
+   "files": [
+    "stage1_beige",
+    "stage1_gruen",
+    "stage1_orange",
+    "stage2_beige",
+    "stage2_gruen",
+    "stage2_orange",
+    "stage3_beige",
+    "stage3_gruen",
+    "stage3_orange",
+    "stage4_beige",
+    "stage4_gruen",
+    "stage4_orange",
+    "stage5_beige",
+    "stage5_gruen",
+    "stage5_orange"
+   ],
+   "glow": [],
+   "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "beige",
+    "gruen",
+    "orange"
+   ]
+  },
+  "lavendel": {
+   "default": false,
+   "files": [
+    "stage1_lila",
+    "stage1_rosa",
+    "stage1_weiss",
+    "stage2_lila",
+    "stage2_rosa",
+    "stage2_weiss",
+    "stage3_lila",
+    "stage3_rosa",
+    "stage3_weiss",
+    "stage4_lila",
+    "stage4_rosa",
+    "stage4_weiss",
+    "stage5_lila",
+    "stage5_rosa",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "lila",
+    "rosa",
+    "weiss"
+   ]
+  },
+  "lilie": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_orange",
+    "stage1_rosa",
+    "stage1_rot",
+    "stage1_weiss",
+    "stage2_gelb",
+    "stage2_orange",
+    "stage2_rosa",
+    "stage2_rot",
+    "stage2_weiss",
+    "stage3_gelb",
+    "stage3_orange",
+    "stage3_rosa",
+    "stage3_rot",
+    "stage3_weiss",
+    "stage4_gelb",
+    "stage4_orange",
+    "stage4_rosa",
+    "stage4_rot",
+    "stage4_weiss",
+    "stage5_gelb",
+    "stage5_orange",
+    "stage5_rosa",
+    "stage5_rot",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "orange",
+    "rosa",
+    "rot",
+    "weiss"
+   ]
+  },
+  "melone": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "mohn": {
+   "default": false,
+   "files": [
+    "stage1_orange",
+    "stage1_rosa",
+    "stage1_rot",
+    "stage1_weiss",
+    "stage2_orange",
+    "stage2_rosa",
+    "stage2_rot",
+    "stage2_weiss",
+    "stage3_orange",
+    "stage3_rosa",
+    "stage3_rot",
+    "stage3_weiss",
+    "stage4_orange",
+    "stage4_rosa",
+    "stage4_rot",
+    "stage4_weiss",
+    "stage5_orange",
+    "stage5_rosa",
+    "stage5_rot",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "orange",
+    "rosa",
+    "rot",
+    "weiss"
+   ]
+  },
+  "monstera": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "pfifferling": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "rose": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_orange",
+    "stage1_rosa",
+    "stage1_rot",
+    "stage1_weiss",
+    "stage2_gelb",
+    "stage2_orange",
+    "stage2_rosa",
+    "stage2_rot",
+    "stage2_weiss",
+    "stage3_gelb",
+    "stage3_orange",
+    "stage3_rosa",
+    "stage3_rot",
+    "stage3_weiss",
+    "stage4_gelb",
+    "stage4_orange",
+    "stage4_rosa",
+    "stage4_rot",
+    "stage4_weiss",
+    "stage5_gelb",
+    "stage5_orange",
+    "stage5_rosa",
+    "stage5_rot",
+    "stage5_weiss"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "orange",
+    "rosa",
+    "rot",
+    "weiss"
+   ]
+  },
+  "sonnenblume": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_rotbraun",
+    "stage2_gelb",
+    "stage2_rotbraun",
+    "stage3_gelb",
+    "stage3_rotbraun",
+    "stage4_gelb",
+    "stage4_rotbraun",
+    "stage5_gelb",
+    "stage5_rotbraun"
+   ],
+   "glow": [],
+   "region": "blumenwiese",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "rotbraun"
+   ]
+  },
+  "steinpilz": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "wald",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "sukkulente": {
+   "default": true,
+   "files": [
+    "stage1",
+    "stage2",
+    "stage3",
+    "stage4",
+    "stage5"
+   ],
+   "glow": [],
+   "region": "pflanzenhandlung",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": []
+  },
+  "tomate": {
+   "default": false,
+   "files": [
+    "stage1_gelb",
+    "stage1_rot",
+    "stage2_gelb",
+    "stage2_rot",
+    "stage3_gelb",
+    "stage3_rot",
+    "stage4_gelb",
+    "stage4_rot",
+    "stage5_gelb",
+    "stage5_rot"
+   ],
+   "glow": [],
+   "region": "gewaechshaus",
+   "stages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "variants": [
+    "gelb",
+    "rot"
+   ]
+  }
+ }
+}
