@@ -1,6 +1,6 @@
 # Wurzelwerk – Konzept
 
-Lernzeit-Tracker als Web-App (PWA) fürs iPhone, mit einem cosy Pixel-Art-Garten als Belohnung.
+Lernzeit-Tracker als Web-App (PWA) fürs iPhone, mit cosy Pixel-Art-Orten (Pflanzenhandlung, Gewächshaus, Blumenwiese, Wald) als Belohnung.
 Im Kern geht es um **Statistiken**, das Pflanzenspiel läuft nebenbei.
 
 ## Plattform
@@ -8,8 +8,8 @@ Im Kern geht es um **Statistiken**, das Pflanzenspiel läuft nebenbei.
 - PWA, wird über Safari → „Zum Home-Bildschirm“ installiert.
 - **Local-first:** Alle Daten liegen in IndexedDB auf dem Gerät. Kein Login, kein Server, läuft offline.
 - `navigator.storage.persist()` wird beim Start angefragt.
-- **Backup:** In den Einstellungen gibt es „Backup exportieren“ (JSON über die Web Share API → Dateien/iCloud/AirDrop) und „Backup importieren“.
-- Die App erinnert an Backups („Letztes Backup vor X Tagen“).
+- **Backup:** Unter „Mehr“ (Einstellungen) gibt es „Backup exportieren“ (JSON über die Web Share API → Dateien/iCloud/AirDrop) und „Backup importieren“. Eine laufende Session wird weder exportiert noch importiert. Der Import prüft die Datei gründlich und meldet Fehler auf Deutsch.
+- Die App erinnert an Backups („Letztes Backup vor X Tagen“): ab 7 Tagen (bzw. wenn es Sessions, aber noch kein Backup gibt) mit einem Punkt am „Mehr“-Tab und einem dezenten Hinweis auf der Lernen-Seite.
 - Hosting: GitHub Pages.
 - Timer laufen über Zeitstempel (Start merken, beim Öffnen die Differenz berechnen), damit die Zeit auch bei gesperrtem Handy stimmt.
 
@@ -41,10 +41,12 @@ Beim Start einer Session wählt man:
 
 - Lernzeit pro **Tag / Woche / Monat / Jahr**, aufgeschlüsselt nach Tag.
 
-## Garten
+## Orte
 
-- Gartenansicht pro Region, filterbar nach Zeitraum (Tag / Woche / Monat / Jahr, ggf. Gesamt) und nach Tag.
-- Die Region **wächst mit der Anzahl der Pflanzen** (neue Parzellen, Regale, Lichtungen). Die Kamera zoomt automatisch passend, Pinch-Zoom für Details.
+Navigation: **Lernen · Statistik · Orte · Shop · Mehr**.
+
+- Ansicht pro Region (Reiter mit kleinem Pflanzen-Marker), filterbar nach Zeitraum (Tag / Woche / Monat / Jahr, ggf. Gesamt) und nach Tag.
+- Die Region **wächst mit der Anzahl der Pflanzen** (neue Parzellen, Regale, Lichtungen). Die Kamera zoomt automatisch passend, Pinch-Zoom für Details. Die Fläche wird auf Bildschirmgröße erweitert (zusätzliche leere Möbelreihen/Beete bzw. mehr Wiese/Waldboden), damit kein ungenutzter Rand bleibt; die Stellplätze der Pflanzen ändern sich dadurch nicht. Zoom-Buttons und Licht-/Anzahl-Anzeige sitzen in einer Leiste unter der Fläche und verdecken nichts.
 - Die Fläche füllt sich **zufällig, aber schön**: Blumenwiese und Wald per Poisson-Disc-Verteilung (keine Klumpen, keine Überlappung), Y-Sortierung für Tiefe, zufälliges Spiegeln.
 - **Pflanzenhandlung:** Die Töpfe stehen auf Möbeln – Wandregale mit drei Böden, Fensterbank + Kommode, Tische, Holzkisten, Teppichinseln am Boden. **Gewächshaus:** Die Pflanzen stehen in Erdbeeten mit Holzrand (Reihen mit Kieswegen, Glaswand dahinter). Jede Pflanze bekommt einen zufälligen freien Stellplatz (Zufall aus der Pflanzen-ID); erst wenn alle Plätze belegt sind, kommt eine Spalte/Reihe Möbel bzw. Beete dazu. Bestehende Pflanzen ziehen dabei nie um (`app/js/layout.js`, Zeichnung in `app/js/furniture.js`).
 - Jede Region hat ihren eigenen Look und eigene Erweiterungslogik.
@@ -59,7 +61,13 @@ Beim Start einer Session wählt man:
 
 ## Regionen und Pflanzen
 
-Freischaltung über **Tokens** (verdient durch Lernzeit). Die Pflanzenhandlung ist die Startregion.
+Freischaltung über **Tokens** im **Shop** (verdient durch Lernzeit). Die Pflanzenhandlung ist die Startregion.
+
+### Token-Ökonomie
+
+- 1 Token pro Lernminute.
+- **Faustregel:** Keine Pflanze und keine Region kostet mehr als **5 h Lernzeit (300 Tokens)**; die günstigsten Pflanzen gibt es nach 1,5 h (90 Tokens). Regionen kosten 300 Tokens und enthalten 1 Gratis-Pflanze. Preise: `app/js/config.js`.
+- Der Kontostand wird nie negativ. Wird eine Session gelöscht, deren Tokens schon ausgegeben sind, bleibt der Stand bei 0 und gekaufte Pflanzen bleiben erhalten (Ausgleich über `kv.tokenAdjust`). Der Lösch-Dialog weist darauf hin.
 
 ### Pflanzenhandlung (Start)
 Zimmerpflanzen in Töpfen, Regale, Tische, Hängeampeln.
@@ -72,6 +80,11 @@ Zimmerpflanzen in Töpfen, Regale, Tische, Hängeampeln.
 - Calathea lancifolia
 - Kaktus
 - Sukkulente (Echeverie)
+- Pilea
+- Strelitzie
+- Bonsai
+- Venusfliegenfalle
+- Orchidee
 
 ### Gewächshaus (kaufbar)
 Gemüse und Kräuter in Beeten/Hochbeeten.
@@ -81,6 +94,11 @@ Gemüse und Kräuter in Beeten/Hochbeeten.
 - Melone
 - Kürbis
 - Chili
+- Erdbeere
+- Paprika
+- Aubergine
+- Zucchini
+- Mais
 
 ### Blumenwiese (kaufbar)
 Locker verstreut. Farbige Blumen bekommen **zufällig eine ihrer natürlichen Farben**.
@@ -93,6 +111,11 @@ Locker verstreut. Farbige Blumen bekommen **zufällig eine ihrer natürlichen Fa
 - Edelnelke
 - Rose
 - Germini
+- Tulpe
+- Vergissmeinnicht
+- Fingerhut
+- Mohnfeld
+- Pusteblume
 
 ### Wald (kaufbar)
 Pilze in Gruppen unter Bäumen, Lichtungen.
@@ -104,12 +127,17 @@ Pilze in Gruppen unter Bäumen, Lichtungen.
 - Efeu
 - Heidelbeerstrauch
 - Moospolster mit Glühpilzen (selten/teuer)
+- Maiglöckchen
+- Hexenring (selten/teuer)
+- Walderdbeere
+- Bärlauch
+- Zunderschwamm
 
-**Summe:** 32 Arten × 5 Stufen = 160 Sprites (+ Farbvarianten per Palettentausch) + Boden-/Deko-Kacheln.
+**Summe:** 52 Arten (14 + 11 + 14 + 13) × 5 Stufen = 260 Sprites (+ Farbvarianten per Palettentausch) + Boden-/Deko-Kacheln.
 
 ## Noch offen
 
-- Token-Ökonomie: Kurs (Tokens pro Minute), Preise für Pflanzen und Regionen
+- Feinjustierung der Preise nach den ersten Wochen Nutzung
 - Start-Pflanzen pro Region
 - Referenzbilder für die Alocasien
-- Gesamt-Ansicht im Garten ja/nein
+- Gesamt-Ansicht über alle Orte ja/nein

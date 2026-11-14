@@ -2,7 +2,8 @@
 import * as db from './db.js';
 import { CONFIG } from './config.js';
 import { PLANT_BY_ID, REGIONS } from './plants.js';
-import { plantsForMinutes, tokensFor } from './growth.js';
+import { plantsForMinutes, tokensFor, tokenBalance, tokensAfterDelete } from './growth.js';
+import { buildExport, validateBackup as checkBackup, importableKV } from './backup.js';
 import { finalize } from './sessionlogic.js';
 import { pickVariant } from './sprites.js';
 
@@ -70,7 +71,16 @@ export function tagColor(id) {
   return tagById(id)?.color || '#a8a2ac';
 }
 
+/** Name schon vergeben (ohne Groß/Klein, nur aktive Tags)? */
+export function tagNameTaken(name, exceptId = null) {
+  const n = (name || '').trim().toLocaleLowerCase('de-DE');
+  return activeTags().some((t) => t.id !== exceptId && t.name.trim().toLocaleLowerCase('de-DE') === n);
+}
+
 export async function saveTag(tag) {
+  const name = (tag.name || '').trim();
+  if (!name && !tag.deleted) throw new Error('Bitte gib dem Tag einen Namen.');
+  if (!tag.deleted && tagNameTaken(name, tag.id)) throw new Error(`Es gibt schon einen Tag „${name}“.`);
   const t = {
     id: tag.id || uid(),
     name: (tag.name || '').trim() || 'Ohne Namen',
@@ -107,8 +117,19 @@ export function tokensSpent() {
   return purchases().reduce((a, p) => a + (p.price || 0), 0);
 }
 
+export function tokenAdjust() {
+  return S.kv.tokenAdjust || 0;
+}
+
+/** Verfügbarer Kontostand – nie negativ. */
 export function balance() {
-  return tokensEarned() - tokensSpent();
+  return tokenBalance(tokensEarned(), tokensSpent(), tokenAdjust());
+}
+
+/** Vorschau fürs Löschen einer Session (siehe growth.tokensAfterDelete). */
+export function deletePreview(sessionId) {
+  const s = S.sessions.find((x) => x.id === sessionId);
+  return tokensAfterDelete(tokensEarned(), tokensSpent(), tokenAdjust(), s?.tokens || 0);
 }
 
 export function unlocked() {
@@ -215,6 +236,12 @@ export async function deleteSession(id) {
   if (!s) return;
   const ops = [{ store: 'sessions', del: id }];
   for (const pid of s.plantIds || []) ops.push({ store: 'plants', del: pid });
+  for (const p of S.plants) if (p.sessionId === id && !(s.plantIds || []).includes(p.id)) ops.push({ store: 'plants', del: p.id });
+  const { adjust } = deletePreview(id);
+  if (adjust !== tokenAdjust()) {
+    ops.push({ store: 'kv', put: { key: 'tokenAdjust', value: adjust } });
+    S.kv.tokenAdjust = adjust;
+  }
   await db.write(ops);
   S.sessions = S.sessions.filter((x) => x.id !== id);
   S.plants = S.plants.filter((p) => p.sessionId !== id);
@@ -223,37 +250,24 @@ export async function deleteSession(id) {
 
 // --- Backup ----------------------------------------------------------------
 export function exportData() {
-  return {
-    app: 'wurzelwerk',
-    format: 1,
-    exportedAt: new Date().toISOString(),
-    data: {
-      tags: S.tags,
-      sessions: S.sessions,
-      plants: S.plants,
-      kv: Object.entries(S.kv).filter(([k]) => k !== 'lastBackupAt').map(([key, value]) => ({ key, value })),
-    },
-  };
+  return buildExport(S);
 }
 
 export function validateBackup(obj) {
-  if (!obj || obj.app !== 'wurzelwerk' || !obj.data) throw new Error('Keine Wurzelwerk-Backup-Datei.');
-  const d = obj.data;
-  for (const k of ['tags', 'sessions', 'plants', 'kv']) if (!Array.isArray(d[k])) throw new Error(`Backup unvollständig (${k}).`);
-  for (const s of d.sessions) if (!s.id || !Array.isArray(s.segments)) throw new Error('Backup enthält ungültige Sessions.');
-  return { tags: d.tags.length, sessions: d.sessions.length, plants: d.plants.length, exportedAt: obj.exportedAt };
+  return checkBackup(obj);
 }
 
+/** Ersetzt alle Daten. Laufende Session und Backup-Datum bleiben lokal. */
 export async function importData(obj) {
-  validateBackup(obj);
+  checkBackup(obj);
   const d = obj.data;
-  const keepBackup = S.kv.lastBackupAt;
+  const keep = { lastBackupAt: S.kv.lastBackupAt, active: S.kv.active };
   const ops = db.STORES.map((store) => ({ store, clear: true }));
   for (const t of d.tags) ops.push({ store: 'tags', put: t });
   for (const s of d.sessions) ops.push({ store: 'sessions', put: s });
   for (const p of d.plants) ops.push({ store: 'plants', put: p });
-  for (const r of d.kv) if (r.key !== 'lastBackupAt') ops.push({ store: 'kv', put: r });
-  if (keepBackup) ops.push({ store: 'kv', put: { key: 'lastBackupAt', value: keepBackup } });
+  for (const r of importableKV(d.kv)) ops.push({ store: 'kv', put: { key: r.key, value: r.value } });
+  for (const [key, value] of Object.entries(keep)) if (value !== undefined) ops.push({ store: 'kv', put: { key, value } });
   await db.write(ops);
   await init();
   emit();

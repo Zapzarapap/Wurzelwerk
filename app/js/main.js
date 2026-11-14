@@ -3,7 +3,9 @@ import * as store from './store.js';
 import { loadManifest } from './sprites.js';
 import { h, icon, clear, toast } from './ui.js';
 import { timerDone } from './sessionlogic.js';
-import { showResult, chime } from './views/learn.js';
+import { showResult, chime, startSession } from './views/learn.js';
+import { backupStatus } from './backup.js';
+import { CONFIG } from './config.js';
 import * as learn from './views/learn.js';
 import * as stats from './views/stats.js';
 import * as garden from './views/garden.js';
@@ -53,6 +55,19 @@ function buildTabbar() {
 function updateBadge() {
   const b = tabbar.querySelector('[data-route="lernen"]');
   b?.classList.toggle('running', !!store.active());
+  const m = tabbar.querySelector('[data-route="einstellungen"]');
+  const due = backupStatus(store.S.kv, store.S.sessions.length, Date.now(), CONFIG.backupReminderDays).due;
+  m?.classList.toggle('badge', due);
+  m?.setAttribute('aria-label', due ? 'Mehr – Backup empfohlen' : 'Mehr');
+}
+
+/** Shortcut „Session starten“ aus dem Manifest: ?aktion=start */
+async function handleShortcut() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('aktion') !== 'start') return;
+  history.replaceState(null, '', location.pathname + '#/lernen');
+  if (store.active()) { toast('Es läuft schon eine Session.'); return; }
+  if (await startSession()) toast('Session gestartet');
 }
 
 /** Timer, die im Hintergrund abgelaufen sind, abschließen – egal welche Ansicht offen ist. */
@@ -81,7 +96,8 @@ async function boot() {
 
   store.onChange(updateBadge);
   window.addEventListener('hashchange', () => show(location.hash.replace('#/', '')));
-  show(location.hash.replace('#/', '') || (store.active() ? 'lernen' : 'lernen'));
+  show(location.hash.replace('#/', '') || 'lernen');
+  await handleShortcut();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkTimer(); });
   setInterval(checkTimer, 5000);
   checkTimer();

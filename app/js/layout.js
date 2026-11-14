@@ -63,8 +63,8 @@ function chronological(plants) {
  * Pflanzenhandlung und Gewächshaus stellen auf Möbel bzw. in Beete
  * (siehe furnitureLayout), Blumenwiese und Wald frei per Poisson-Disc.
  */
-export function layoutGarden(plants, region, cfg = CONFIG.garden) {
-  if (INDOOR[region]) return furnitureLayout(plants, region);
+export function layoutGarden(plants, region, cfg = CONFIG.garden, fill = null) {
+  if (INDOOR[region]) return furnitureLayout(plants, region, fill);
   const sorted = chronological(plants);
   const { W, H } = worldSize(sorted.length, region, cfg);
   const mg = REGION_MARGINS[region] || REGION_MARGINS.blumenwiese;
@@ -118,7 +118,20 @@ export function layoutGarden(plants, region, cfg = CONFIG.garden) {
     items.push({ plant, x, y, flip, z: y });
   }
   items.sort((a, b) => a.y - b.y || a.x - b.x);
-  return { W, H, region, items, pieces: [] };
+  return fillOutdoor({ W, H, region, items, pieces: [] }, fill);
+}
+
+/**
+ * Füllfläche (Blumenwiese/Wald): Die Welt wird auf mindestens fill.W × fill.H
+ * erweitert, damit sie den Bildschirm ganz ausfüllt. Pflanzen werden nur
+ * verschoben (zentriert), nie neu verteilt.
+ */
+export function fillOutdoor(layout, fill) {
+  if (!fill) return layout;
+  const W = Math.max(layout.W, Math.ceil(fill.W)), H = Math.max(layout.H, Math.ceil(fill.H));
+  const dx = Math.floor((W - layout.W) / 2), dy = Math.floor((H - layout.H) / 2);
+  if (dx || dy) for (const it of layout.items) { it.x += dx; it.y += dy; it.z = it.y; }
+  return { ...layout, W, H, baseW: layout.W, baseH: layout.H };
 }
 
 /** Kleinster Abstand zwischen platzierten Punkten (für Tests). */
@@ -262,8 +275,13 @@ export function makeCell(region, c, r) {
   return { parts, slots };
 }
 
-/** Möbel-/Beet-Layout, siehe Kommentar oben. */
-export function furnitureLayout(plants, region) {
+/**
+ * Möbel-/Beet-Layout, siehe Kommentar oben.
+ * fill = {W, H}: Nach dem Platzieren werden leere Reihen/Spalten angefügt
+ * (und zuletzt Boden), bis der Raum diese Fläche ausfüllt. Die Plätze der
+ * Pflanzen hängen davon nicht ab.
+ */
+export function furnitureLayout(plants, region, fill = null) {
   const d = INDOOR[region];
   const sorted = chronological(plants);
   let C = 0, R = d.start[1];
@@ -305,9 +323,16 @@ export function furnitureLayout(plants, region) {
     }
     items.push({ plant, x, y, flip, z: s.z + (y - s.y) * 0.01, slot: s.key });
   }
-  const { W, H } = roomSize(region, C, R);
+  const base = roomSize(region, C, R);
+  if (fill) {
+    while (roomSize(region, C, R).H + d.rowH <= fill.H) addRow();
+    while (roomSize(region, C, R).W + d.cellW <= fill.W) addColumn();
+  }
+  const room = roomSize(region, C, R);
+  const W = fill ? Math.max(room.W, Math.ceil(fill.W)) : room.W;
+  const H = fill ? Math.max(room.H, Math.ceil(fill.H)) : room.H;
   items.sort((a, b) => a.z - b.z || a.x - b.x);
   pieces.sort((a, b) => a.z - b.z || a.x - b.x);
   // free: noch freie Stellplätze (für Deko, die einer Pflanze sofort Platz macht)
-  return { W, H, region, items, pieces, walls, cols: C, rows: R, capacity: total, free: open };
+  return { W, H, region, items, pieces, walls, cols: C, rows: R, capacity: total, free: open, baseW: base.W, baseH: base.H };
 }

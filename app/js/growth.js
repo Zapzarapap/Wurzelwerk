@@ -58,3 +58,24 @@ export function growingInfo(total, steps = CONFIG.growthSteps, full = CONFIG.min
 export function tokensFor(minutes) {
   return Math.floor(Math.max(0, minutes) * CONFIG.tokensPerMinute);
 }
+
+/**
+ * Kontostand: nie negativ. adjust gleicht Tokens aus, die durch das Löschen
+ * einer Session schon ausgegeben waren (gekaufte Pflanzen bleiben).
+ */
+export function tokenBalance(earned, spent, adjust = 0) {
+  return Math.max(0, earned + adjust - spent);
+}
+
+/**
+ * Was passiert beim Löschen einer Session mit `tokens` Tokens?
+ * → { lost: Tokens, die vom Kontostand abgehen, alreadySpent: Teil, der schon ausgegeben ist,
+ *     adjust: neuer Ausgleichswert }
+ */
+export function tokensAfterDelete(earned, spent, adjust, tokens) {
+  const before = earned + adjust - spent; // kann durch alte Daten < 0 sein
+  const avail = Math.max(0, before);
+  const lost = Math.min(avail, tokens);
+  const after = before - tokens;
+  return { lost, alreadySpent: tokens - lost, adjust: after < 0 ? adjust - after : adjust };
+}

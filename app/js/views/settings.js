@@ -2,12 +2,14 @@
 import { h, clear, icon, confirmDialog, toast } from '../ui.js';
 import * as store from '../store.js';
 import { editTag } from './tageditor.js';
-import { fmtDate, daysAgo, fmtTime } from '../format.js';
+import { fmtDate, fmtTime } from '../format.js';
 import { CONFIG } from '../config.js';
 import { PLANTS } from '../plants.js';
 import { hasRealSprites } from '../sprites.js';
 import { setLightOverride, getLightOverride, currentLight } from '../clock.js';
 import { APP_VERSION } from '../version.js';
+import { importErrorMessage, backupStatus } from '../backup.js';
+import { plural } from '../text.js';
 
 export function mount(root) {
   let prepared = null; // vorbereitete Backup-Datei (Share muss synchron im Klick passieren)
@@ -40,7 +42,7 @@ export function mount(root) {
       await store.setKV('lastBackupAt', Date.now());
       toast('Backup erstellt');
     } catch (e) {
-      if (e?.name !== 'AbortError') toast('Backup fehlgeschlagen: ' + (e?.message || e));
+      if (e?.name !== 'AbortError') toast('Backup fehlgeschlagen. Bitte noch einmal versuchen.');
     }
   }
 
@@ -53,12 +55,12 @@ export function mount(root) {
       obj = JSON.parse(await f.text());
       info = store.validateBackup(obj);
     } catch (e) {
-      toast(e instanceof SyntaxError ? 'Datei ist kein gültiges JSON.' : e.message);
+      toast(importErrorMessage(e), 4200);
       return;
     }
     const ok = await confirmDialog({
       title: 'Backup importieren?',
-      text: `Backup vom ${info.exportedAt ? fmtDate(info.exportedAt) : '?'}: ${info.sessions} Sessions, ${info.plants} Pflanzen, ${info.tags} Tags. Alle aktuellen Daten auf diesem Gerät werden dabei ersetzt.`,
+      text: `Backup ${info.exportedAt ? 'vom ' + fmtDate(info.exportedAt) : 'ohne Datum'}: ${plural(info.sessions, 'Session')}, ${plural(info.plants, 'Pflanze')}, ${plural(info.tags, 'Tag', 'Tags')}. Alle aktuellen Daten auf diesem Gerät werden dabei ersetzt. Eine laufende Session bleibt erhalten.`,
       ok: 'Ersetzen und importieren', danger: true,
     });
     if (!ok) return;
@@ -66,7 +68,7 @@ export function mount(root) {
       await store.importData(obj);
       toast('Backup importiert');
     } catch (e) {
-      toast('Import fehlgeschlagen: ' + e.message);
+      toast('Import fehlgeschlagen: ' + importErrorMessage(e), 4200);
     }
   }
 
@@ -79,13 +81,12 @@ export function mount(root) {
 
     // Backup
     const last = store.S.kv.lastBackupAt;
-    const age = last ? daysAgo(last, now) : null;
-    const warn = store.S.sessions.length && (age == null || age >= CONFIG.backupReminderDays);
+    const { due: warn, days: age } = backupStatus(store.S.kv, store.S.sessions.length, now, CONFIG.backupReminderDays);
     const fileInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'hidden', onchange: (e) => importBackup(e.target) });
     page.append(h('section', { class: 'card' },
       h('h3', {}, 'Backup'),
-      h('p', { class: 'backup-age' + (warn ? ' warn' : '') },
-        last ? (age === 0 ? 'Letztes Backup: heute' : `Letztes Backup vor ${age} ${age === 1 ? 'Tag' : 'Tagen'}`) : 'Noch kein Backup erstellt'),
+      h('p', { class: 'backup-age' + (warn ? ' warn' : '') }, warn ? icon('warn', 24) : null,
+        h('span', {}, last ? (age === 0 ? 'Letztes Backup: heute' : age === 1 ? 'Letztes Backup: gestern' : `Letztes Backup vor ${age} Tagen`) : 'Noch kein Backup erstellt')),
       h('p', { class: 'muted small' }, 'Alle Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig in Dateien/iCloud – z. B. vor einem iOS-Update.'),
       h('div', { class: 'btn-row' },
         h('button', { class: 'btn primary', onclick: exportBackup }, icon('share', 14), 'Backup exportieren'),
@@ -100,8 +101,8 @@ export function mount(root) {
       const mins = store.S.sessions.filter((s) => s.tagId === t.id).reduce((a, s) => a + s.minutes, 0);
       tagList.append(h('button', { class: 'tag-item', onclick: () => editTag(t) },
         h('span', { class: 'dot big', style: { background: t.color } }),
-        h('span', { class: 'grow' }, t.name),
-        h('span', { class: 'muted small' }, mins ? `${Math.round(mins / 60)} h` : ''),
+        h('span', { class: 'grow tag-name' }, t.name),
+        h('span', { class: 'muted small nowrap' }, mins ? (mins < 60 ? `${mins} min` : `${Math.round(mins / 60)} h`) : ''),
         icon('edit', 14)));
     }
     page.append(h('section', { class: 'card' },
@@ -137,8 +138,8 @@ export function mount(root) {
     page.append(h('section', { class: 'card' },
       h('h3', {}, 'Tageszeit in den Orten'),
       h('p', { class: 'muted small' }, 'Das Licht folgt der echten Uhrzeit (Sonnenstand für Deutschland). Hier kannst du andere Tageszeiten ansehen – gilt nur bis zum Neustart.'),
-      h('label', { class: 'check' }, live, 'Echtzeit'),
-      slider, out,
+      h('label', { class: 'check' }, live, h('span', {}, 'Echtzeit')),
+      h('label', { class: 'range-wrap' }, h('span', { class: 'sr-only' }, 'Uhrzeit für die Vorschau'), slider), out,
     ));
 
     // Speicher & Info
@@ -148,7 +149,7 @@ export function mount(root) {
       h('div', { class: 'kv' },
         h('span', {}, 'Dauerhafter Speicher'), h('span', {}, persisted == null ? '…' : persisted ? 'aktiv' : 'nicht gewährt'),
         h('span', {}, 'Belegt'), h('span', {}, estimate ? `${(estimate.usage / 1024).toFixed(0)} KB` : '…'),
-        h('span', {}, 'Sessions / Pflanzen'), h('span', {}, `${store.S.sessions.length} / ${store.S.plants.length}`),
+        h('span', {}, 'Gespeichert'), h('span', {}, `${plural(store.S.sessions.length, 'Session')} · ${plural(store.S.plants.length, 'Pflanze')}`),
         h('span', {}, 'Gezeichnete Arten'), h('span', {}, `${drawn} von ${PLANTS.length}`),
         h('span', {}, 'Version'), h('span', {}, APP_VERSION),
         h('span', {}, 'Installiert seit'), h('span', {}, store.S.kv.installedAt ? fmtDate(store.S.kv.installedAt) : '–'),

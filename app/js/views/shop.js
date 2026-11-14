@@ -1,5 +1,6 @@
 // Shop: Regionen und Pflanzen mit Tokens freischalten.
-import { h, clear, icon, spriteEl, confirmDialog, toast, tokenBadge } from '../ui.js';
+import { h, clear, icon, spriteEl, confirmDialog, toast, tokenBadge, regionMarker } from '../ui.js';
+import { plural } from '../text.js';
 import * as store from '../store.js';
 import { REGIONS, plantsOfRegion, PLANT_BY_ID } from '../plants.js';
 import { CONFIG } from '../config.js';
@@ -12,7 +13,7 @@ export function mount(root) {
     const page = h('div', { class: 'page shop' });
     page.append(h('header', { class: 'topbar' }, h('h1', {}, 'Shop'), tokenBadge(bal)));
     page.append(h('p', { class: 'muted intro' },
-      `Jede Lernminute bringt ${CONFIG.tokensPerMinute} Token. Verdient: ${store.tokensEarned().toLocaleString('de-DE')} · ausgegeben: ${store.tokensSpent().toLocaleString('de-DE')}`));
+      `Jede Lernminute bringt ${plural(CONFIG.tokensPerMinute, 'Token')}. Verdient: ${store.tokensEarned().toLocaleString('de-DE')} · ausgegeben: ${store.tokensSpent().toLocaleString('de-DE')}`));
 
     for (const r of REGIONS) {
       const unlocked = store.isRegionUnlocked(r.id);
@@ -20,11 +21,13 @@ export function mount(root) {
       const card = h('section', { class: 'card shop-region ' + r.id + (unlocked ? '' : ' locked') });
       const incl = (CONFIG.includedWithRegion[r.id] || []).map((id) => PLANT_BY_ID[id]?.name).filter(Boolean);
       card.append(h('div', { class: 'shop-region-head' },
+        regionMarker(r.id, 1),
         h('div', { class: 'grow' }, h('h3', {}, r.name), h('p', { class: 'muted small' }, r.desc, !unlocked && incl.length ? ` Inklusive ${incl.join(', ')}.` : '')),
         unlocked ? h('span', { class: 'owned' }, 'Freigeschaltet')
           : h('button', {
-            class: 'btn primary small',
+            class: 'btn primary small price',
             disabled: bal < price,
+            'aria-label': `${r.name} für ${price} Tokens freischalten`,
             onclick: () => buy('region', r.id, r.name, price),
           }, icon('coin', 12), String(price))));
 
@@ -38,11 +41,12 @@ export function mount(root) {
           !hasRealSprites(p.id) ? h('div', { class: 'wip' }, 'Skizze') : null,
           have ? h('div', { class: 'owned small' }, unlocked ? 'Frei' : 'Gekauft')
             : h('button', {
-              class: 'btn small ' + (can ? 'primary' : 'secondary'),
+              class: 'btn small price ' + (can ? 'primary' : 'secondary'),
+              'aria-label': `${p.name} für ${p.price} Tokens freischalten`,
               disabled: !can,
               title: !unlocked ? 'Erst die Region freischalten' : bal < p.price ? 'Nicht genug Tokens' : '',
               onclick: () => buy('plant', p.id, p.name, p.price),
-            }, icon(unlocked ? 'coin' : 'lock', 12), String(p.price))));
+            }, unlocked ? null : icon('lock', 12), icon('coin', 12), String(p.price))));
       }
       card.append(grid);
       page.append(card);
@@ -53,7 +57,7 @@ export function mount(root) {
   async function buy(type, id, name, price) {
     const ok = await confirmDialog({
       title: `${name} freischalten?`,
-      text: `Kostet ${price} Tokens. Danach hast du noch ${store.balance() - price} Tokens.`,
+      text: `Kostet ${plural(price, 'Token')}. Danach hast du noch ${plural(store.balance() - price, 'Token')}.`,
       ok: 'Freischalten',
     });
     if (!ok) return;

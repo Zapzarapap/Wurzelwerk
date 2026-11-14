@@ -1,7 +1,7 @@
 // Service Worker: App-Shell cache-first aus versioniertem Cache, Sprites
 // cache-first, sprites.json network-first. Bei Releases VERSION erhöhen
 // (muss zu js/version.js passen – wird in app/tests geprüft).
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 const CACHE = 'wurzelwerk-' + VERSION;
 
 const SHELL = [
@@ -10,6 +10,18 @@ const SHELL = [
   'manifest.webmanifest',
   'css/style.css',
   'icons/icon-32.png',
+  'icons/favicon.svg',
+  'icons/splash/splash-1125x2436.png',
+  'icons/splash/splash-1170x2532.png',
+  'icons/splash/splash-1179x2556.png',
+  'icons/splash/splash-1206x2622.png',
+  'icons/splash/splash-1242x2208.png',
+  'icons/splash/splash-1242x2688.png',
+  'icons/splash/splash-1284x2778.png',
+  'icons/splash/splash-1290x2796.png',
+  'icons/splash/splash-1320x2868.png',
+  'icons/splash/splash-750x1334.png',
+  'icons/splash/splash-828x1792.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',
@@ -25,6 +37,8 @@ const SHELL = [
   'js/sessionlogic.js',
   'js/stats.js',
   'js/format.js',
+  'js/text.js',
+  'js/backup.js',
   'js/sun.js',
   'js/clock.js',
   'js/layout.js',

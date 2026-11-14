@@ -44,6 +44,7 @@ export class GardenRenderer {
   }
 
   destroy() {
+    clearTimeout(this.relayoutT);
     this.ro.disconnect();
     cancelAnimationFrame(this.raf);
     this.destroyed = true;
@@ -53,8 +54,15 @@ export class GardenRenderer {
   async setData(region, plants, light) {
     const token = ++this.token;
     this.region = region;
+    this.plants = plants;
     this.light = light;
-    const layout = layoutGarden(plants, region);
+    // Erst die eigentliche Fläche, dann so erweitern, dass sie den Bildschirm füllt
+    const base = layoutGarden(plants, region);
+    const s = this.chooseScale(base.W, base.H);
+    const cw = this.canvas.width, ch = this.canvas.height;
+    const layout = cw > 1 && ch > 1 ? layoutGarden(plants, region, undefined, { W: Math.floor(cw / s), H: Math.floor(ch / s) }) : base;
+    layout.scale = s;
+    this.viewKey = `${cw}x${ch}`;
     // Deko (weicht den Pflanzen aus, siehe decor.js)
     layout.pieces = [...(layout.pieces || []), ...decorPieces(layout)];
     // Im Gewächshaus stehen die Pflanzen in gezeichneten Beeten: Sprites ohne eigenen Beet-Fuß
@@ -199,6 +207,19 @@ export class GardenRenderer {
   }
 
   // --- Kamera --------------------------------------------------------------
+  /**
+   * Maßstab (Geräte-Pixel pro Welt-Pixel), mit dem eine W×H-Welt ganz zu sehen ist.
+   * Ab 4 ganzzahlig (scharf), darunter fein gestuft, damit große Orte nicht
+   * auf die Hälfte schrumpfen. Die Welt wird danach auf Bildschirmgröße erweitert.
+   */
+  chooseScale(W, H) {
+    const cw = this.canvas.width, ch = this.canvas.height;
+    const s = Math.min(cw / W, ch / H);
+    if (!(s > 0) || !Number.isFinite(s)) return 1;
+    if (s >= 4) return Math.floor(s);
+    return Math.max(0.5, Math.floor(s * 8) / 8);
+  }
+
   resize() {
     const r = this.canvas.getBoundingClientRect();
     this.dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
@@ -207,6 +228,11 @@ export class GardenRenderer {
     const cx = this.canvas.width / 2, cy = this.canvas.height / 2;
     this.canvas.width = w;
     this.canvas.height = h;
+    // Neue Bildschirmgröße: Fläche neu auffüllen
+    if (this.plants && this.viewKey !== `${w}x${h}`) {
+      clearTimeout(this.relayoutT);
+      this.relayoutT = setTimeout(() => this.setData(this.region, this.plants, this.light), 60);
+    }
     if (!this.userMoved) this.fit();
     else {
       this.cam.ox += Math.round(w / 2 - cx);
@@ -217,13 +243,15 @@ export class GardenRenderer {
 
   fitScale() {
     if (!this.layout) return 1;
-    const { W, H } = this.layout;
-    return Math.max(1, Math.floor(Math.min(this.canvas.width / W, this.canvas.height / H)));
+    const { W, H, scale } = this.layout;
+    // Aufgefüllte Fläche: genau der Maßstab, für den sie gebaut wurde
+    if (scale && W * scale <= this.canvas.width + 0.5 && H * scale <= this.canvas.height + 0.5) return scale;
+    return this.chooseScale(W, H);
   }
 
   limits() {
     const f = this.fitScale();
-    return { min: Math.max(1, Math.floor(f * 0.6)), max: Math.max(f * 6, 14 * this.dpr) };
+    return { min: f, max: Math.max(f * 6, 14 * this.dpr) };
   }
 
   fit() {
@@ -249,7 +277,8 @@ export class GardenRenderer {
 
   zoomAt(s, px, py, anchor = null) {
     const { min, max } = this.limits();
-    s = Math.max(min, Math.min(max, Math.round(s)));
+    s = Math.min(max, s);
+    s = s <= min + 1e-6 ? min : Math.max(min, s >= 2 ? Math.round(s) : Math.round(s * 4) / 4);
     const wx = anchor ? anchor.wx : (px - this.cam.ox) / this.cam.s;
     const wy = anchor ? anchor.wy : (py - this.cam.oy) / this.cam.s;
     this.cam.s = s;
@@ -262,8 +291,8 @@ export class GardenRenderer {
 
   zoomBy(f) {
     const s = this.cam.s;
-    let n = Math.round(s * f);
-    if (n === s) n = s + (f > 1 ? 1 : -1);
+    let n = s * f >= 2 ? Math.round(s * f) : s * f;
+    if (Math.abs(n - s) < 0.01) n = s + (f > 1 ? 1 : -1);
     this.zoomAt(n, this.canvas.width / 2, this.canvas.height / 2);
   }
 
@@ -331,8 +360,9 @@ export class GardenRenderer {
       e.preventDefault();
       const p = this._pt(e);
       const s = this.cam.s;
-      let n = Math.round(s * (e.deltaY < 0 ? 1.25 : 0.8));
-      if (n === s) n = s + (e.deltaY < 0 ? 1 : -1);
+      let n = s * (e.deltaY < 0 ? 1.25 : 0.8);
+      if (n >= 2) n = Math.round(n);
+      if (Math.abs(n - s) < 0.01) n = s + (e.deltaY < 0 ? 1 : -1);
       this.zoomAt(n, p.x, p.y);
     }, { passive: false });
     cv.addEventListener('dblclick', (e) => {
@@ -364,7 +394,12 @@ export class GardenRenderer {
     c.fillRect(0, 0, cv.width, cv.height);
     if (!this.world) return;
     const { s, ox, oy } = this.cam;
-    c.drawImage(this.world, ox, oy, this.world.width * s, this.world.height * s);
+    c.drawImage(this.world, ox, oy, Math.round(this.world.width * s), Math.round(this.world.height * s));
+    // Welt-Pixel → Geräte-Pixel (auch bei krummem Maßstab ohne Kantenglättung)
+    const wr = (x, y, w, hh) => {
+      const x0 = Math.round(ox + x * s), y0 = Math.round(oy + y * s);
+      c.fillRect(x0, y0, Math.round(ox + (x + w) * s) - x0, Math.round(oy + (y + hh) * s) - y0);
+    };
     // Glühwürmchen (Blumenwiese, nachts)
     if (L && L.glow > 0.3 && this.scene.fireflies.length) {
       const t = performance.now() / 1000;
@@ -373,9 +408,9 @@ export class GardenRenderer {
         if (a < 0.05) continue;
         const x = f.x + Math.round(Math.sin(t * 0.4 + f.p) * 3), y = f.y + Math.round(Math.cos(t * 0.3 + f.p) * 2);
         c.fillStyle = `rgba(220,255,140,${a * 0.25})`;
-        c.fillRect(ox + (x - 1) * s, oy + (y - 1) * s, 3 * s, 3 * s);
+        wr(x - 1, y - 1, 3, 3);
         c.fillStyle = `rgba(240,255,170,${a})`;
-        c.fillRect(ox + x * s, oy + y * s, s, s);
+        wr(x, y, 1, 1);
       }
     }
     // Schmetterlinge und Bienen (Blumenwiese, tagsüber)
@@ -384,7 +419,7 @@ export class GardenRenderer {
       const t = this.still ? 0 : performance.now() / 1000;
       const a = 1 - L.glow * 2;
       const tint = (rgb) => `rgba(${rgb.map((v, i) => Math.round((v * m[i]) / 255)).join(',')},${a})`;
-      const px = (x, y, col) => { c.fillStyle = col; c.fillRect(ox + x * s, oy + y * s, s, s); };
+      const px = (x, y, col) => { c.fillStyle = col; wr(x, y, 1, 1); };
       for (const f of crit) {
         if (f.bee) {
           const x = Math.round(f.x + Math.sin(t * 0.7 + f.p) * 9 + Math.sin(t * 5 + f.p) * 1);
@@ -407,8 +442,7 @@ export class GardenRenderer {
     if (this.selected) {
       const it = this.selected;
       c.fillStyle = 'rgba(255,248,220,0.9)';
-      const y = oy + (it.y + 3) * s, x0 = ox + (it.x - 5) * s;
-      c.fillRect(x0, y, 10 * s, s);
+      wr(it.x - 5, it.y + 3, 10, 1);
     }
   }
 

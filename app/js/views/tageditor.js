@@ -21,16 +21,33 @@ export function editTag(tag = null) {
       custom.addEventListener('input', () => { color = custom.value; paint(); });
       swatches.append(custom);
       paint();
-      const save = async () => {
+      const err = h('p', { class: 'field-error', role: 'alert', 'aria-live': 'polite' });
+      const showErr = (msg) => {
+        err.textContent = msg || '';
+        input.classList.toggle('invalid', !!msg);
+        input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+      };
+      const check = () => {
         const name = input.value.trim();
-        if (!name) { input.focus(); return; }
-        result = await store.saveTag({ ...(tag || {}), name, color });
-        close();
+        if (!name) return 'Bitte gib dem Tag einen Namen.';
+        if (store.tagNameTaken(name, tag?.id)) return `Es gibt schon einen Tag „${name}“. Wähle einen anderen Namen.`;
+        return '';
+      };
+      const save = async () => {
+        const msg = check();
+        if (msg) { showErr(msg); input.focus(); return; }
+        try {
+          result = await store.saveTag({ ...(tag || {}), name: input.value.trim(), color });
+          close();
+        } catch (e) {
+          showErr(e.message);
+        }
       };
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+      input.addEventListener('input', () => { if (err.textContent) showErr(check()); });
       return h('div', { class: 'dialog' },
         h('h2', {}, tag ? 'Tag bearbeiten' : 'Neuer Tag'),
-        h('label', { class: 'field' }, h('span', {}, 'Name'), input),
+        h('label', { class: 'field' }, h('span', {}, 'Name'), input, err),
         h('div', { class: 'field' }, h('span', {}, 'Farbe'), swatches),
         h('div', { class: 'dialog-actions' },
           tag ? h('button', {

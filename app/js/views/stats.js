@@ -5,6 +5,7 @@ import { aggregate, shiftAnchor, periodRange, tagBreakdown, totalMs, sessionMsIn
 import { fmtDuration, fmtTime, periodLabel, fmtDate } from '../format.js';
 import { barChart } from '../chart.js';
 import { PLANT_BY_ID } from '../plants.js';
+import { plural, sessionDayLabel } from '../text.js';
 
 const KIND_LABELS = [['day', 'Tag'], ['week', 'Woche'], ['month', 'Monat'], ['year', 'Jahr']];
 
@@ -55,15 +56,14 @@ export function mount(root) {
     page.append(h('div', { class: 'kpis' },
       h('div', { class: 'kpi main' },
         h('div', { class: 'label' }, 'Lernzeit'),
-        h('div', { class: 'value' }, fmtDuration(agg.total)),
-        h('div', { class: 'delta ' + (diff == null ? '' : diff >= 0 ? 'up' : 'down') },
-          diff == null ? (prev.total === 0 && agg.total > 0 ? `neu ggü. ${prevName}` : `${prevName}: –`) : `${diff >= 0 ? '+' : ''}${Math.round(diff * 100)} % ggü. ${prevName}`)),
+        h('div', { class: 'value' }, durParts(agg.total)),
+        deltaEl(diff, prev.total, agg.total, prevName)),
       kind === 'day'
-        ? h('div', { class: 'kpi' }, h('div', { class: 'label' }, 'Sessions'), h('div', { class: 'value' }, String(agg.sessionCount)))
-        : h('div', { class: 'kpi' }, h('div', { class: 'label' }, 'Ø pro Tag'), h('div', { class: 'value' }, fmtDuration(agg.total / elapsedDays))),
+        ? kpi('Sessions', String(agg.sessionCount))
+        : kpi('Ø pro Tag', durParts(agg.total / elapsedDays)),
       kind === 'day'
-        ? h('div', { class: 'kpi' }, h('div', { class: 'label' }, 'Längste'), h('div', { class: 'value' }, fmtDuration(longest(agg.range))))
-        : h('div', { class: 'kpi' }, h('div', { class: 'label' }, 'Lerntage'), h('div', { class: 'value' }, `${agg.activeDays}/${kind === 'year' || kind === 'month' || kind === 'week' ? elapsedDays : agg.days}`)),
+        ? kpi('Längste', durParts(longest(agg.range)))
+        : kpi('Lerntage', h('span', {}, String(agg.activeDays), h('small', {}, ` von ${elapsedDays}`))),
     ));
 
     // Diagramm
@@ -136,18 +136,28 @@ export function mount(root) {
       if (!list.length) card.append(h('p', { class: 'muted empty' }, 'Keine Sessions an diesem Tag.'));
       for (const s of list) {
         const p = store.S.plants.find((x) => x.sessionId === s.id);
+        const msDay = sessionMsIn(s, a, e);
+        const lbl = sessionDayLabel(s, a, e, msDay, fmtTime, fmtDuration);
+        const nPl = s.plantIds?.length || 0;
         card.append(h('div', { class: 'session-row' },
           p ? spriteEl(p.species, p.stage, p.variant, 1) : h('span', { class: 'sprite-empty' }),
           h('div', { class: 'grow' },
-            h('div', {}, h('span', { class: 'dot', style: { background: store.tagColor(s.tagId) } }), ' ', store.tagName(s.tagId)),
-            h('div', { class: 'muted small' }, `${fmtTime(s.startedAt)}–${fmtTime(s.endedAt)} · ${PLANT_BY_ID[s.species]?.name || ''}${(s.plantIds?.length || 0) > 1 ? ` ×${s.plantIds.length}` : ''}`)),
-          h('div', { class: 'dur' }, fmtDuration(sessionMsIn(s, a, e))),
+            h('div', { class: 'session-tag' }, h('span', { class: 'dot', style: { background: store.tagColor(s.tagId) } }), h('span', { class: 'ellipsis' }, store.tagName(s.tagId))),
+            h('div', { class: 'muted small' }, lbl.range,
+              lbl.part ? h('span', { class: 'part' }, ` · ${lbl.part}`) : ` · ${nPl > 1 ? nPl + '× ' : ''}${PLANT_BY_ID[s.species]?.name || ''}`)),
+          h('div', { class: 'dur' + (lbl.part ? ' partial' : '') }, fmtDuration(msDay), lbl.part ? h('div', { class: 'of' }, `von ${fmtDuration(s.minutes * 60000)}`) : null),
           h('button', {
             class: 'icon-btn small', 'aria-label': 'Session löschen',
             onclick: async () => {
+              const pv = store.deletePreview(s.id);
+              const tok = s.tokens || 0;
+              const tokText = tok === 0 ? ''
+                : pv.alreadySpent === 0 ? ` Die ${plural(tok, 'Token')} werden abgezogen.`
+                  : pv.lost === 0 ? ` Die ${plural(tok, 'Token')} hast du schon ausgegeben – dein Kontostand bleibt bei 0, gekaufte Pflanzen behältst du.`
+                    : ` ${plural(pv.lost, 'Token')} werden abgezogen, der Rest ist schon ausgegeben – dein Kontostand fällt auf 0, gekaufte Pflanzen behältst du.`;
               const ok = await confirmDialog({
                 title: 'Session löschen?',
-                text: `${fmtDuration(s.minutes * 60000)} vom ${fmtDate(s.startedAt)} und die dabei gewachsenen Pflanzen werden entfernt. Verdiente Tokens werden abgezogen.`,
+                text: `${fmtDuration(s.minutes * 60000)} vom ${fmtDate(s.startedAt)}${nPl ? ` und ${nPl === 1 ? 'die dabei gewachsene Pflanze wird' : `die ${nPl} dabei gewachsenen Pflanzen werden`} entfernt.` : ' wird entfernt.'}${tokText}`,
                 ok: 'Löschen', danger: true,
               });
               if (ok) { await store.deleteSession(s.id); toast('Session gelöscht'); }
@@ -160,9 +170,13 @@ export function mount(root) {
     const all = totalMs(store.S.sessions);
     page.append(h('div', { class: 'all-time' },
       h('span', {}, 'Insgesamt gelernt'), h('strong', {}, fmtDuration(all)),
-      h('span', { class: 'muted' }, `· ${store.S.sessions.length} Sessions · ${store.S.plants.length} Pflanzen`)));
+      h('span', { class: 'muted' }, `· ${plural(store.S.sessions.length, 'Session')} · ${plural(store.S.plants.length, 'Pflanze')}`)));
 
     root.append(page);
+  }
+
+  function kpi(label, value) {
+    return h('div', { class: 'kpi' }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, value));
   }
 
   function longest(range) {
@@ -174,4 +188,22 @@ export function mount(root) {
   render();
   const off = store.onChange(render);
   return { unmount: off };
+}
+
+/** Dauer als zwei nicht trennbare Teile („1 h“ „23 min“) – bricht nur zwischen den Teilen um. */
+function durParts(ms) {
+  const parts = fmtDuration(ms).split(/ (?=\d)/);
+  return h('span', { class: 'dur-parts' }, parts.map((p) => h('span', { class: 'nowrap' }, p)));
+}
+
+/** Vergleich zum Vorzeitraum: ▲ / ▼ / neutral bei 0 %. */
+function deltaEl(diff, prevTotal, total, prevName) {
+  if (diff == null) {
+    return h('div', { class: 'delta' }, prevTotal === 0 && total > 0 ? `neu ggü. ${prevName}` : `${prevName}: –`);
+  }
+  const pct = Math.round(diff * 100);
+  const cls = pct > 0 ? 'up' : pct < 0 ? 'down' : 'same';
+  return h('div', { class: 'delta ' + cls, title: `ggü. ${prevName}` },
+    h('span', { class: 'nowrap' }, pct === 0 ? '±0 %' : `${pct > 0 ? '+' : '−'}${Math.abs(pct)} %`), ' ',
+    h('span', { class: 'nowrap' }, `ggü. ${prevName}`));
 }

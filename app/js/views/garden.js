@@ -1,5 +1,6 @@
 // Orte: Ansicht pro Region (Pflanzenhandlung, Gewächshaus, Blumenwiese, Wald), Filter Zeitraum + Tag, Tageszeit-Licht.
-import { h, clear, icon, segmented, spriteEl } from '../ui.js';
+import { h, clear, icon, segmented, spriteEl, regionMarker } from '../ui.js';
+import { plural } from '../text.js';
 import * as store from '../store.js';
 import { REGIONS, REGION_BY_ID, PLANT_BY_ID, VARIANT_LABELS } from '../plants.js';
 import { CONFIG } from '../config.js';
@@ -23,13 +24,15 @@ export function mount(root, { navigate, params }) {
   const lightChip = h('div', { class: 'light-chip' });
   const countChip = h('div', { class: 'count-chip' });
   const empty = h('div', { class: 'garden-empty hidden' });
+  // Steuerleiste unter der Fläche: verdeckt nichts von der Region
   const tools = h('div', { class: 'garden-tools' },
-    h('button', { class: 'icon-btn glass', 'aria-label': 'Hineinzoomen', onclick: () => renderer.zoomBy(1.5) }, icon('plus', 16)),
-    h('button', { class: 'icon-btn glass', 'aria-label': 'Herauszoomen', onclick: () => renderer.zoomBy(1 / 1.5) }, icon('minus', 16)),
-    h('button', { class: 'icon-btn glass', 'aria-label': 'Einpassen', onclick: () => renderer.fit() }, icon('fit', 16)),
+    h('button', { class: 'icon-btn', 'aria-label': 'Herauszoomen', onclick: () => renderer.zoomBy(1 / 1.5) }, icon('minus', 12)),
+    h('button', { class: 'icon-btn', 'aria-label': 'Hineinzoomen', onclick: () => renderer.zoomBy(1.5) }, icon('plus', 12)),
+    h('button', { class: 'icon-btn', 'aria-label': 'Ganzen Ort zeigen', onclick: () => renderer.fit() }, icon('fit', 12)),
   );
-  stageWrap.append(canvas, tools, lightChip, countChip, empty, info);
-  page.append(head, stageWrap);
+  const bar = h('div', { class: 'garden-bar' }, h('div', { class: 'garden-chips' }, lightChip, countChip), tools);
+  stageWrap.append(canvas, empty, info);
+  page.append(head, stageWrap, bar);
   root.append(page);
 
   const renderer = new GardenRenderer(canvas, { onTap: showInfo });
@@ -58,7 +61,7 @@ export function mount(root, { navigate, params }) {
         },
         'aria-pressed': String(r.id === state.region),
         'aria-label': unlocked ? r.name : `${r.name} (gesperrt, im Shop freischalten)`,
-      }, unlocked ? null : icon('lock', 10), r.name));
+      }, regionMarker(r.id, 1), h('span', {}, r.name), unlocked ? null : icon('lock', 12)));
     }
     head.append(regs);
     regs.scrollLeft = prevScroll;
@@ -81,9 +84,9 @@ export function mount(root, { navigate, params }) {
       const lbl = periodLabel(state.kind, state.anchor, now);
       const cur = +periodRange(state.kind, now).start === +periodRange(state.kind, state.anchor).start;
       row2.append(h('div', { class: 'mini-nav' },
-        h('button', { class: 'icon-btn small', 'aria-label': 'Zurück', onclick: () => { state.anchor = shiftAnchor(state.kind, state.anchor, -1); update(); } }, icon('left', 14)),
+        h('button', { class: 'icon-btn small', 'aria-label': 'Zurück', onclick: () => { state.anchor = shiftAnchor(state.kind, state.anchor, -1); update(); } }, icon('left', 12)),
         h('button', { class: 'mini-title', onclick: () => { state.anchor = new Date(); update(); } }, lbl.title),
-        h('button', { class: 'icon-btn small', 'aria-label': 'Weiter', disabled: cur, onclick: () => { state.anchor = shiftAnchor(state.kind, state.anchor, 1); update(); } }, icon('right', 14)),
+        h('button', { class: 'icon-btn small', 'aria-label': 'Weiter', disabled: cur, onclick: () => { state.anchor = shiftAnchor(state.kind, state.anchor, 1); update(); } }, icon('right', 12)),
       ));
     } else row2.append(h('div', { class: 'mini-nav' }, h('span', { class: 'mini-title' }, 'Alle Pflanzen')));
     const sel = h('select', { class: 'select', 'aria-label': 'Tag-Filter', onchange: (e) => { state.tag = e.target.value; update(); } },
@@ -108,7 +111,7 @@ export function mount(root, { navigate, params }) {
     renderHead();
     const plants = filtered();
     const L = renderLight();
-    countChip.textContent = `${plants.length} ${plants.length === 1 ? 'Pflanze' : 'Pflanzen'}`;
+    countChip.textContent = plural(plants.length, 'Pflanze');
     const any = store.S.plants.some((p) => p.region === state.region);
     empty.classList.toggle('hidden', plants.length > 0);
     clear(empty).append(h('div', {},
@@ -128,7 +131,7 @@ export function mount(root, { navigate, params }) {
         h('strong', {}, sp?.name || p.species, p.variant ? h('span', { class: 'muted' }, ' · ' + (VARIANT_LABELS[p.variant] || p.variant)) : null),
         h('div', { class: 'muted small' }, `Stufe ${p.stage} · ${fmtDuration(p.minutes * 60000)} · ${fmtDate(p.createdAt)}`),
         h('div', { class: 'small' }, h('span', { class: 'dot', style: { background: store.tagColor(p.tagId) } }), ' ', store.tagName(p.tagId))),
-      h('button', { class: 'icon-btn small', 'aria-label': 'Schließen', onclick: () => { renderer.selected = null; renderer.render(); hideInfo(); } }, icon('close', 12)),
+      h('button', { class: 'icon-btn small', 'aria-label': 'Schließen', onclick: () => { renderer.selected = null; renderer.render(); hideInfo(); } }, icon('close', 24)),
     );
     info.classList.remove('hidden');
   }

@@ -1,21 +1,19 @@
 // Lernen: Session einrichten und laufende Session anzeigen.
-import { h, clear, icon, spriteEl, segmented, confirmDialog, openSheet, tokenBadge, toast } from '../ui.js';
+import { h, clear, icon, spriteEl, segmented, confirmDialog, openSheet, tokenBadge, toast, regionMarker } from '../ui.js';
 import * as store from '../store.js';
 import { CONFIG } from '../config.js';
 import { REGIONS, plantsOfRegion, PLANT_BY_ID, REGION_BY_ID, VARIANT_LABELS } from '../plants.js';
 import { createActive, elapsedMs, pause, resume, isPaused, timerDone, timerEndAt } from '../sessionlogic.js';
 import { growingInfo, plantsForMinutes } from '../growth.js';
-import { fmtClock, fmtDuration, fmtTime, daysAgo } from '../format.js';
+import { fmtClock, fmtDuration, fmtTime } from '../format.js';
+import { plural, plantSummary } from '../text.js';
+import { backupStatus } from '../backup.js';
 import { aggregate, streak } from '../stats.js';
 import { pickVariant } from '../sprites.js';
 import { editTag } from './tageditor.js';
 
-export function mount(root, { navigate }) {
-  let timer = null;
-  let lastKey = '';
-  let finishing = false;
-
-  const setup = () => {
+/** Aktuelle Auswahl fürs Starten (zuletzt genutzt, auf Freigeschaltetes geprüft). */
+export function currentSetup() {
     const s = { ...(store.S.kv.lastSetup || {}) };
     const tags = store.activeTags();
     if (!tags.find((t) => t.id === s.tagId)) s.tagId = tags[0]?.id || null;
@@ -26,7 +24,23 @@ export function mount(root, { navigate }) {
     s.mode ||= 'timer';
     s.targetMin ||= CONFIG.defaultTimerMinutes;
     return s;
-  };
+}
+
+/** Session mit der aktuellen Auswahl starten (auch für den Shortcut „Session starten“). */
+export async function startSession() {
+  const s = currentSetup();
+  if (!s.tagId || !s.species || store.active()) return false;
+  const a = createActive({ ...s, variant: pickVariant(s.species) }, Date.now());
+  await store.setKV('lastSetup', s);
+  await store.setActive(a);
+  return true;
+}
+
+export function mount(root, { navigate }) {
+  let timer = null;
+  let lastKey = '';
+  let finishing = false;
+  const setup = currentSetup;
 
   const saveSetup = (patch) => store.setKV('lastSetup', { ...setup(), ...patch });
 
@@ -53,16 +67,16 @@ export function mount(root, { navigate }) {
 
     page.append(h('div', { class: 'today-card' },
       h('div', {}, h('div', { class: 'label' }, 'Heute gelernt'), h('div', { class: 'big' }, fmtDuration(today.total))),
-      h('div', { class: 'right' }, h('div', { class: 'label' }, 'Serie'), h('div', { class: 'big' }, `${st} ${st === 1 ? 'Tag' : 'Tage'}`)),
+      h('div', { class: 'right' }, h('div', { class: 'label' }, 'Serie'), h('div', { class: 'big' }, plural(st, 'Tag'))),
     ));
 
     // Backup-Erinnerung
-    const last = store.S.kv.lastBackupAt;
-    const ref = last || store.S.kv.installedAt || now;
-    if (store.S.sessions.length && daysAgo(ref, now) >= CONFIG.backupReminderDays) {
-      page.append(h('button', { class: 'banner', onclick: () => navigate('einstellungen') },
-        icon('share', 16),
-        h('span', {}, last ? `Letztes Backup vor ${daysAgo(last, now)} Tagen – jetzt sichern?` : 'Noch kein Backup – jetzt sichern?')));
+    const bk = backupStatus(store.S.kv, store.S.sessions.length, now, CONFIG.backupReminderDays);
+    if (bk.due) {
+      page.append(h('button', { class: 'backup-hint', onclick: () => navigate('einstellungen') },
+        h('span', { class: 'backup-dot', 'aria-hidden': 'true' }),
+        h('span', { class: 'grow' }, bk.days == null ? 'Noch kein Backup gemacht' : `Letztes Backup vor ${bk.days} Tagen`),
+        h('span', { class: 'backup-go' }, 'Sichern', icon('right', 12))));
     }
 
     // Tag
@@ -72,7 +86,7 @@ export function mount(root, { navigate }) {
         class: 'chip' + (t.id === s.tagId ? ' on' : ''),
         style: { '--tag': t.color },
         onclick: () => saveSetup({ tagId: t.id }),
-      }, h('span', { class: 'dot' }), t.name));
+      }, h('span', { class: 'dot' }), h('span', { class: 'chip-label' }, t.name)));
     }
     tagRow.append(h('button', {
       class: 'chip add',
@@ -80,7 +94,7 @@ export function mount(root, { navigate }) {
         const t = await editTag();
         if (t) saveSetup({ tagId: t.id });
       },
-    }, icon('plus', 12), 'Neu'));
+    }, icon('plus', 12), h('span', {}, 'Neu')));
     page.append(section('Tag', tagRow));
 
     // Region
@@ -90,7 +104,9 @@ export function mount(root, { navigate }) {
       regRow.append(h('button', {
         class: 'region-card ' + r.id + (r.id === s.region ? ' on' : '') + (unlocked ? '' : ' locked'),
         onclick: () => (unlocked ? saveSetup({ region: r.id, species: null }) : navigate('laden')),
-      }, h('span', { class: 'rname' }, r.name), unlocked ? null : h('span', { class: 'rlock' }, icon('lock', 12), `${CONFIG.regionPrices[r.id]}`)));
+        'aria-label': unlocked ? r.name : `${r.name} – gesperrt, ${CONFIG.regionPrices[r.id]} Tokens im Shop`,
+      }, regionMarker(r.id, 1), h('span', { class: 'rname' }, hyphenName(r.name)),
+      unlocked ? null : h('span', { class: 'rlock' }, icon('lock', 12), h('span', {}, String(CONFIG.regionPrices[r.id])), icon('coin', 12))));
     }
     page.append(section('Region', regRow));
 
@@ -127,7 +143,7 @@ export function mount(root, { navigate }) {
       const plants = plantsForMinutes(s.targetMin);
       const txt = !plants.length ? 'Unter 15 Minuten wächst noch nichts.'
         : plants.length === 1 ? `Deine Pflanze erreicht Stufe ${plants[0].stage} von 5.`
-          : `Ergibt ${plants.length} Pflanzen (Stufen ${plants.map((p) => p.stage).join(', ')}).`;
+          : `Ergibt ${plural(plants.length, 'Pflanze')} (Stufen ${plants.map((p) => p.stage).join(', ')}).`;
       modeBox.append(h('p', { class: 'hint' }, txt));
     } else {
       modeBox.append(h('p', { class: 'hint' }, 'Läuft bis du stoppst. Nach 2 h beginnt eine zweite Pflanze, nach 4 h eine dritte …'));
@@ -138,12 +154,8 @@ export function mount(root, { navigate }) {
     page.append(h('button', {
       class: 'btn primary start',
       disabled: !canStart,
-      onclick: async () => {
-        const a = createActive({ ...s, variant: pickVariant(s.species) }, Date.now());
-        await store.setKV('lastSetup', s);
-        await store.setActive(a);
-      },
-    }, icon('play', 18), 'Session starten'));
+      onclick: () => startSession(),
+    }, icon('play', 24), 'Session starten'));
     if (!s.tagId) page.append(h('p', { class: 'hint center' }, 'Lege zuerst einen Tag an.'));
 
     root.append(page);
@@ -180,7 +192,7 @@ export function mount(root, { navigate }) {
       progText,
       h('div', { class: 'session-actions' },
         pauseBtn,
-        h('button', { class: 'btn danger big-btn', onclick: () => askStop() }, icon('stop', 16), 'Beenden'),
+        h('button', { class: 'btn danger big-btn', onclick: () => askStop() }, icon('stop', 24), 'Beenden'),
       ),
     );
     pauseBtn.addEventListener('click', async () => {
@@ -211,7 +223,7 @@ export function mount(root, { navigate }) {
         subEl.textContent = paused ? 'Pausiert' : gi.index > 0 ? `Pflanze ${gi.index + 1} wächst` : 'Endless';
       }
       page.classList.toggle('paused', paused);
-      pauseBtn.replaceChildren(icon(paused ? 'play' : 'pause', 16), paused ? 'Weiter' : 'Pause');
+      pauseBtn.replaceChildren(icon(paused ? 'play' : 'pause', 24), paused ? 'Weiter' : 'Pause');
       progFill.style.width = `${Math.round(gi.progress * 100)}%`;
       progText.textContent = gi.nextStage
         ? (gi.stage === 0 ? `Keimt … noch ${Math.ceil(gi.minutesToNext)} min bis Stufe 1` : `Stufe ${gi.stage} · noch ${Math.ceil(gi.minutesToNext)} min bis Stufe ${gi.nextStage}`)
@@ -238,7 +250,7 @@ export function mount(root, { navigate }) {
     if (min < CONFIG.growthSteps[0].minutes) {
       const r = await confirmDialog({
         title: 'Schon aufhören?',
-        text: `Unter ${CONFIG.growthSteps[0].minutes} Minuten wächst noch nichts. Die ${min} min zählen trotzdem in deiner Statistik.`,
+        text: `Unter ${CONFIG.growthSteps[0].minutes} Minuten wächst noch nichts. ${min === 0 ? 'Bisher ist noch keine volle Minute vergangen.' : `${min === 1 ? 'Die 1 Minute zählt' : `Die ${min} Minuten zählen`} trotzdem in deiner Statistik.`}`,
         ok: 'Beenden', cancel: 'Weiterlernen', extra: { label: 'Verwerfen', value: 'discard' },
       });
       if (r === 'discard') return discard();
@@ -248,7 +260,7 @@ export function mount(root, { navigate }) {
     const plants = plantsForMinutes(min);
     const r = await confirmDialog({
       title: 'Session beenden?',
-      text: `${fmtDuration(min * 60000)} gelernt – ${plants.length === 1 ? `deine Pflanze erreicht Stufe ${plants[0].stage}` : `${plants.length} Pflanzen wachsen`}.`,
+      text: `${fmtDuration(min * 60000)} gelernt – ${plants.length === 1 ? `deine Pflanze erreicht Stufe ${plants[0].stage}` : `${plural(plants.length, 'Pflanze')} wachsen`}.`,
       ok: 'Beenden', cancel: 'Weiterlernen', extra: { label: 'Verwerfen', value: 'discard' },
     });
     if (r === 'discard') return discard();
@@ -306,9 +318,9 @@ export function showResult({ session, plants }, navigate) {
       : plants.map((p) => spriteEl(p.species, p.stage, p.variant, plants.length > 2 ? 3 : 4))),
     h('div', { class: 'result-stats' },
       h('div', {}, h('div', { class: 'big' }, fmtDuration(session.minutes * 60000)), h('div', { class: 'label' }, 'gelernt')),
-      h('div', {}, h('div', { class: 'big' }, '+' + session.tokens), h('div', { class: 'label' }, 'Tokens')),
+      h('div', {}, h('div', { class: 'big token-big' }, icon('coin', 24), '+' + session.tokens), h('div', { class: 'label' }, session.tokens === 1 ? 'Token' : 'Tokens')),
     ),
-    nothing ? null : h('p', { class: 'muted center' }, plants.map((p) => `${PLANT_BY_ID[p.species]?.name} Stufe ${p.stage}`).join(' · ') + ` → ${REGION_BY_ID[session.region]?.name}`),
+    nothing ? null : h('p', { class: 'muted center' }, plantSummary(plants, Object.fromEntries(plants.map((p) => [p.species, PLANT_BY_ID[p.species]?.name]))) + ` → ${REGION_BY_ID[session.region]?.name}`),
     h('div', { class: 'dialog-actions' },
       nothing ? null : h('button', { class: 'btn secondary', onclick: () => { close(); navigate('garten', { region: session.region }); } }, 'Zu den Orten'),
       h('button', { class: 'btn primary', onclick: () => close() }, 'Fertig'),
@@ -336,3 +348,8 @@ export function chime() {
   } catch { /* egal */ }
 }
 
+
+/** Weiche Trennstellen, damit lange Ortsnamen in schmalen Karten sauber umbrechen. */
+function hyphenName(name) {
+  return name.replace('Pflanzenhandlung', 'Pflanzen\u00adhandlung').replace('Gewächshaus', 'Gewächs\u00adhaus').replace('Blumenwiese', 'Blumen\u00adwiese');
+}
