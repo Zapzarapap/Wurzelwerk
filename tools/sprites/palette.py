@@ -38,3 +38,23 @@ RAMPS = {
 def hex_to_rgba(h, a=255):
     h = h.lstrip("#")
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
+
+
+# Region-spezifische Zusatzrampen: Dateien palette_<region>.py mit einem
+# Dict EXTRA = {"name": [5 Farben]}. Namen dürfen sich nicht überschneiden.
+def _load_extra():
+    import glob
+    import importlib.util
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    for path in sorted(glob.glob(os.path.join(here, "palette_*.py"))):
+        spec = importlib.util.spec_from_file_location(os.path.basename(path)[:-3], path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        for k, v in getattr(mod, "EXTRA", {}).items():
+            if k in RAMPS:
+                raise ValueError(f"Rampe {k!r} doppelt definiert ({path})")
+            RAMPS[k] = v
+
+
+_load_extra()
