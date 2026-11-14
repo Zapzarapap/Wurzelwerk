@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-14T17:14:19Z",
+ "generated": "2026-11-14T17:24:04Z",
  "species": {
   "alocasia_black_velvet": {
    "default": true,
@@ -11,6 +11,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -31,6 +32,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -51,6 +53,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -71,6 +74,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -85,12 +89,24 @@
    "default": true,
    "files": [
     "stage1",
+    "stage1_nofoot",
+    "stage2",
+    "stage2_nofoot",
+    "stage3",
+    "stage3_nofoot",
+    "stage4",
+    "stage4_nofoot",
+    "stage5",
+    "stage5_nofoot"
+   ],
+   "glow": [],
+   "nofoot": [
+    "stage1",
     "stage2",
     "stage3",
     "stage4",
     "stage5"
    ],
-   "glow": [],
    "region": "gewaechshaus",
    "stages": [
     1,
@@ -111,6 +127,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -131,6 +148,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -151,6 +169,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -164,6 +183,39 @@
   "chili": {
    "default": false,
    "files": [
+    "stage1_gelb",
+    "stage1_gelb_nofoot",
+    "stage1_gruen",
+    "stage1_gruen_nofoot",
+    "stage1_rot",
+    "stage1_rot_nofoot",
+    "stage2_gelb",
+    "stage2_gelb_nofoot",
+    "stage2_gruen",
+    "stage2_gruen_nofoot",
+    "stage2_rot",
+    "stage2_rot_nofoot",
+    "stage3_gelb",
+    "stage3_gelb_nofoot",
+    "stage3_gruen",
+    "stage3_gruen_nofoot",
+    "stage3_rot",
+    "stage3_rot_nofoot",
+    "stage4_gelb",
+    "stage4_gelb_nofoot",
+    "stage4_gruen",
+    "stage4_gruen_nofoot",
+    "stage4_rot",
+    "stage4_rot_nofoot",
+    "stage5_gelb",
+    "stage5_gelb_nofoot",
+    "stage5_gruen",
+    "stage5_gruen_nofoot",
+    "stage5_rot",
+    "stage5_rot_nofoot"
+   ],
+   "glow": [],
+   "nofoot": [
     "stage1_gelb",
     "stage1_gruen",
     "stage1_rot",
@@ -180,7 +232,6 @@
     "stage5_gruen",
     "stage5_rot"
    ],
-   "glow": [],
    "region": "gewaechshaus",
    "stages": [
     1,
@@ -220,6 +271,7 @@
     "stage5_weiss"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -245,6 +297,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -265,6 +318,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -285,6 +339,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -305,6 +360,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -345,6 +401,7 @@
     "stage5_weiss"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -382,6 +439,7 @@
     "stage4",
     "stage5"
    ],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -396,12 +454,24 @@
    "default": true,
    "files": [
     "stage1",
+    "stage1_nofoot",
+    "stage2",
+    "stage2_nofoot",
+    "stage3",
+    "stage3_nofoot",
+    "stage4",
+    "stage4_nofoot",
+    "stage5",
+    "stage5_nofoot"
+   ],
+   "glow": [],
+   "nofoot": [
+    "stage1",
     "stage2",
     "stage3",
     "stage4",
     "stage5"
    ],
-   "glow": [],
    "region": "gewaechshaus",
    "stages": [
     1,
@@ -422,6 +492,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -447,6 +518,7 @@
     "stage5_rosa"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -485,6 +557,7 @@
     "stage5_weiss"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -504,6 +577,39 @@
    "default": false,
    "files": [
     "stage1_beige",
+    "stage1_beige_nofoot",
+    "stage1_gruen",
+    "stage1_gruen_nofoot",
+    "stage1_orange",
+    "stage1_orange_nofoot",
+    "stage2_beige",
+    "stage2_beige_nofoot",
+    "stage2_gruen",
+    "stage2_gruen_nofoot",
+    "stage2_orange",
+    "stage2_orange_nofoot",
+    "stage3_beige",
+    "stage3_beige_nofoot",
+    "stage3_gruen",
+    "stage3_gruen_nofoot",
+    "stage3_orange",
+    "stage3_orange_nofoot",
+    "stage4_beige",
+    "stage4_beige_nofoot",
+    "stage4_gruen",
+    "stage4_gruen_nofoot",
+    "stage4_orange",
+    "stage4_orange_nofoot",
+    "stage5_beige",
+    "stage5_beige_nofoot",
+    "stage5_gruen",
+    "stage5_gruen_nofoot",
+    "stage5_orange",
+    "stage5_orange_nofoot"
+   ],
+   "glow": [],
+   "nofoot": [
+    "stage1_beige",
     "stage1_gruen",
     "stage1_orange",
     "stage2_beige",
@@ -519,7 +625,6 @@
     "stage5_gruen",
     "stage5_orange"
    ],
-   "glow": [],
    "region": "gewaechshaus",
    "stages": [
     1,
@@ -554,6 +659,7 @@
     "stage5_weiss"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -598,6 +704,7 @@
     "stage5_weiss"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -618,12 +725,24 @@
    "default": true,
    "files": [
     "stage1",
+    "stage1_nofoot",
+    "stage2",
+    "stage2_nofoot",
+    "stage3",
+    "stage3_nofoot",
+    "stage4",
+    "stage4_nofoot",
+    "stage5",
+    "stage5_nofoot"
+   ],
+   "glow": [],
+   "nofoot": [
+    "stage1",
     "stage2",
     "stage3",
     "stage4",
     "stage5"
    ],
-   "glow": [],
    "region": "gewaechshaus",
    "stages": [
     1,
@@ -659,6 +778,7 @@
     "stage5_weiss"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -684,6 +804,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -704,6 +825,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -744,6 +866,7 @@
     "stage5_weiss"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -775,6 +898,7 @@
     "stage5_rotbraun"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "blumenwiese",
    "stages": [
     1,
@@ -798,6 +922,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "wald",
    "stages": [
     1,
@@ -818,6 +943,7 @@
     "stage5"
    ],
    "glow": [],
+   "nofoot": [],
    "region": "pflanzenhandlung",
    "stages": [
     1,
@@ -832,6 +958,29 @@
    "default": false,
    "files": [
     "stage1_gelb",
+    "stage1_gelb_nofoot",
+    "stage1_rot",
+    "stage1_rot_nofoot",
+    "stage2_gelb",
+    "stage2_gelb_nofoot",
+    "stage2_rot",
+    "stage2_rot_nofoot",
+    "stage3_gelb",
+    "stage3_gelb_nofoot",
+    "stage3_rot",
+    "stage3_rot_nofoot",
+    "stage4_gelb",
+    "stage4_gelb_nofoot",
+    "stage4_rot",
+    "stage4_rot_nofoot",
+    "stage5_gelb",
+    "stage5_gelb_nofoot",
+    "stage5_rot",
+    "stage5_rot_nofoot"
+   ],
+   "glow": [],
+   "nofoot": [
+    "stage1_gelb",
     "stage1_rot",
     "stage2_gelb",
     "stage2_rot",
@@ -842,7 +991,6 @@
     "stage5_gelb",
     "stage5_rot"
    ],
-   "glow": [],
    "region": "gewaechshaus",
    "stages": [
     1,

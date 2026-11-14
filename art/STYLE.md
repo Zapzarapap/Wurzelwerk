@@ -43,4 +43,6 @@ Gilt für **alle** Sprites, damit der Look einheitlich bleibt, egal wer zeichnet
 - Code: `tools/sprites/plants/<art>.py` mit `REGION`, `draw(stage)` und optional `VARIANTS`.
 - Rendern: `python3 -I tools/sprites/preview.py <art>`
 - Ausgabe: `art/sprites/<region>/<art>/stage<N>[_<variante>].png`, Vorschau: `art/preview/<art>.png`
+- Gewächshaus zusätzlich ohne eigenen Beet-Fuß: `python3 -I tools/sprites/preview.py --nofoot <art>` → `stage<N>[_<variante>]_nofoot.png` (Erdpunkt bei y = 27). Die App setzt diese Sprites in die gezeichneten Beete. Nach Änderungen an Gewächshaus-Pflanzen beide Varianten rendern.
+- Danach immer `python3 -I tools/build_manifest.py`.
 - Referenzen: `monstera`, `mohn`, `fliegenpilz`.

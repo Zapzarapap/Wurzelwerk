@@ -13,6 +13,8 @@ Ausgabe pro Art:
   files     – alle Dateinamen ohne .png (inkl. _glow), damit die App
               ohne 404-Versuche weiß, was existiert
   glow      – Liste der Dateien, die eine Leucht-Maske haben
+  nofoot    – Liste der Dateien, die zusätzlich ohne Beet-Fuß existieren
+              (<name>_nofoot.png, siehe tools/sprites/preview.py --nofoot)
 """
 import json
 import os
@@ -39,18 +41,24 @@ def scan():
             adir = os.path.join(rdir, art)
             if not os.path.isdir(adir):
                 continue
-            stages, variants, files, glow = set(), set(), [], []
+            stages, variants, files, glow, nofoot = set(), set(), [], [], []
             has_default = False
             for fn in sorted(os.listdir(adir)):
                 if not fn.endswith(".png"):
                     continue
                 stem = fn[:-4]
                 is_glow = stem.endswith("_glow")
-                m = PAT.match(stem[:-5] if is_glow else stem)
+                base = stem[:-5] if is_glow else stem
+                is_nofoot = base.endswith("_nofoot")
+                m = PAT.match(base[:-7] if is_nofoot else base)
                 if not m:
                     continue
                 stage, variant = int(m.group(1)), m.group(2)
                 files.append(fn[:-4])
+                if is_nofoot:
+                    if not is_glow:
+                        nofoot.append(base[:-7])
+                    continue
                 if is_glow:
                     glow.append(fn[:-4 - len("_glow")])
                     continue
@@ -71,6 +79,7 @@ def scan():
                 "default": has_default,
                 "files": files,
                 "glow": glow,
+                "nofoot": nofoot,
             }
     return species
 

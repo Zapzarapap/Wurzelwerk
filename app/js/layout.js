@@ -51,12 +51,21 @@ export function worldSize(n, region, cfg = CONFIG.garden) {
   }
 }
 
+function chronological(plants) {
+  return [...plants].sort((a, b) => (a.createdAt - b.createdAt) || (a.id < b.id ? -1 : 1));
+}
+
 /**
  * plants: [{id, createdAt}] – wird chronologisch platziert.
- * → { W, H, items: [{plant, x, y, flip}] } (x/y = Fußpunkt, sortiert nach y)
+ * → { W, H, region, items: [{plant, x, y, flip, z}], pieces: [...] }
+ *   x/y = Fußpunkt (Topfboden bzw. Erdpunkt), z = Zeichenreihenfolge;
+ *   items und pieces sind nach z sortiert (hinten → vorne).
+ * Pflanzenhandlung und Gewächshaus stellen auf Möbel bzw. in Beete
+ * (siehe furnitureLayout), Blumenwiese und Wald frei per Poisson-Disc.
  */
 export function layoutGarden(plants, region, cfg = CONFIG.garden) {
-  const sorted = [...plants].sort((a, b) => (a.createdAt - b.createdAt) || (a.id < b.id ? -1 : 1));
+  if (INDOOR[region]) return furnitureLayout(plants, region);
+  const sorted = chronological(plants);
   const { W, H } = worldSize(sorted.length, region, cfg);
   const mg = REGION_MARGINS[region] || REGION_MARGINS.blumenwiese;
   const x0 = mg.side, x1 = W - mg.side, y0 = mg.top, y1 = H - mg.bottom;
@@ -106,10 +115,10 @@ export function layoutGarden(plants, region, cfg = CONFIG.garden) {
     const gi = Math.floor(y / cell) * gw + Math.floor(x / cell);
     (grid[gi] ||= []).push(p);
     placed.push(p);
-    items.push({ plant, x, y, flip });
+    items.push({ plant, x, y, flip, z: y });
   }
   items.sort((a, b) => a.y - b.y || a.x - b.x);
-  return { W, H, items };
+  return { W, H, region, items, pieces: [] };
 }
 
 /** Kleinster Abstand zwischen platzierten Punkten (für Tests). */
@@ -121,4 +130,183 @@ export function minDistance(items) {
       if (d < best) best = d;
     }
   return best;
+}
+
+// --- Innenräume: Möbel (Pflanzenhandlung) und Beete (Gewächshaus) -----------
+//
+// Der Raum besteht aus einem Raster von Zellen (cellW breit). Jede Zelle trägt
+// ein Möbelstück bzw. Beet mit festen Stellplätzen. Die Pflanzen werden
+// chronologisch auf einen zufälligen freien Platz gestellt (Zufall aus der
+// Pflanzen-ID). Erst wenn alle Plätze belegt sind, wächst der Raum um eine
+// Spalte oder Reihe (je nach Seitenverhältnis). Weil Zellen nur rechts/unten
+// angefügt werden und der Platz einer Pflanze nur von den Pflanzen *vor* ihr
+// abhängt, ziehen bestehende Pflanzen beim Wachsen nie um.
+//
+// Pflanzenhandlung: Reihe 0 ist die Rückwand (abwechselnd Wandregal und Fenster
+// mit Fensterbank + Kommode), darunter Bodenreihen (Tisch, Kisten, Teppich).
+// Gewächshaus: Reihen von Erdbeeten mit Holzrand, Kieswege dazwischen.
+
+export const INDOOR = {
+  pflanzenhandlung: { cellW: 64, side: 8, top: 110, rowH: 44, bottom: 4, start: [2, 1], aspect: 1.4 },
+  gewaechshaus: { cellW: 64, side: 8, top: 40, rowH: 42, bottom: 4, start: [2, 2], aspect: 1.4 },
+};
+
+// Pflanzenhandlung: Maße der Möbel (Welt-Pixel, relativ zur Zellmitte/Bodenlinie)
+export const SHOP = {
+  wallH: 100, // Wand bis hier, darunter Dielen
+  wallFoot: 106, // Standlinie der Wandmöbel
+  shelfTiers: [102, 70, 38], // Topfböden der drei Regalböden (unten → oben)
+  shelfDx: [-17, 0, 17],
+  sillY: 56, // Topfboden auf der Fensterbank
+  sillDx: [-10, 10],
+  sideboardH: 22,
+  tableH: 16,
+  crates: [[12, 20, 6], [20, 10, 14], [8, 16, 22], [14, 6, 18]],
+};
+
+// Gewächshaus: Beet in Zellkoordinaten (links oben = 0,0)
+export const BED = {
+  x0: 3, x1: 60, // Außenkante Holzrand
+  top: 6, // Oberkante hinterer Rand
+  front: 25, // Oberkante vorderes Brett
+  bottom: 31, // Unterkante Frontbrett
+  rows: [
+    { y: 15, xs: [14, 32, 50] },
+    { y: 23, xs: [23, 41] },
+  ],
+};
+
+export function roomSize(region, C, R) {
+  const d = INDOOR[region];
+  return { W: 2 * d.side + C * d.cellW, H: d.top + R * d.rowH + d.bottom };
+}
+
+/** Zeilenindizes, die ein Raum mit R (Boden-/Beet-)Reihen hat. */
+function rowIndices(region, R) {
+  return region === 'pflanzenhandlung'
+    ? Array.from({ length: R + 1 }, (_, i) => i) // 0 = Wand
+    : Array.from({ length: R }, (_, i) => i);
+}
+
+function cellRnd(region, c, r) {
+  return mulberry32(hashString(`${region}:${c}:${r}`));
+}
+
+/** Bodenmöbel-Typ einer Zelle (deterministisch, Nachbarn möglichst verschieden). */
+export function floorKind(c, r) {
+  const pick = (cc) => {
+    const v = cellRnd('pflanzenhandlung', cc, r)();
+    return v < 0.45 ? 'table' : v < 0.75 ? 'crates' : 'rug';
+  };
+  let k = pick(c);
+  if (c > 0 && k === floorKind(c - 1, r)) {
+    const v = cellRnd('pflanzenhandlung', c, r + 1000)();
+    k = ['table', 'crates', 'rug'].filter((x) => x !== k)[v < 0.6 ? 0 : 1];
+  }
+  return k;
+}
+
+/**
+ * Eine Zelle → { parts: [{kind, part, x, y, z, v}], slots: [{x, y, z, key, jitter}], wall? }
+ * parts sind Zeichenteile der Möbel (scenery.js zeichnet sie), z = Reihenfolge.
+ */
+export function makeCell(region, c, r) {
+  const d = INDOOR[region];
+  const x0 = d.side + c * d.cellW, cx = x0 + d.cellW / 2;
+  const parts = [], slots = [];
+  const slot = (x, y, z, jitter = 0) => slots.push({ x, y, z, key: `${c},${r},${slots.length}`, jitter });
+  if (region === 'gewaechshaus') {
+    const yT = d.top + r * d.rowH;
+    parts.push({ kind: 'bed', part: 'body', x: x0, y: yT, z: yT + BED.top, v: (c * 7 + r * 3) % 4 });
+    for (const row of BED.rows) for (const sx of row.xs) slot(x0 + sx, yT + row.y, yT + row.y, 1);
+    // ab und zu eine Gießkanne im Weg unter dem Beet
+    const rr = cellRnd(region, c, r);
+    if (rr() < 0.28) {
+      const gx = x0 + 8 + Math.floor(rr() * 46), gy = yT + d.rowH - 2;
+      parts.push({ kind: 'can', part: 'body', x: gx, y: gy, z: gy, v: rr() < 0.5 ? 0 : 1 });
+    }
+    return { parts, slots };
+  }
+  // Pflanzenhandlung
+  if (r === 0) {
+    const kind = c % 2 === 0 ? 'shelf' : 'window';
+    const F = SHOP.wallFoot;
+    if (kind === 'shelf') {
+      parts.push({ kind: 'shelf', part: 'back', x: cx, y: F, z: F });
+      SHOP.shelfTiers.forEach((s, t) => {
+        if (t > 0) parts.push({ kind: 'shelf', part: 'board' + t, x: cx, y: F, z: F + 0.2 * t });
+        for (const dx of SHOP.shelfDx) slot(cx + dx, s, F + 0.1 + 0.2 * t);
+      });
+    } else {
+      for (const dx of SHOP.sillDx) slot(cx + dx, SHOP.sillY, SHOP.wallH - 4);
+      parts.push({ kind: 'sideboard', part: 'body', x: cx, y: F, z: F });
+      for (const dx of SHOP.shelfDx) slot(cx + dx, F - SHOP.sideboardH, F + 0.1);
+    }
+    return { parts, slots, wall: { kind, x0, cx } };
+  }
+  const yT = d.top + (r - 1) * d.rowH, gy = yT + d.rowH - 6;
+  const kind = floorKind(c, r);
+  if (kind === 'table') {
+    parts.push({ kind: 'table', part: 'body', x: cx, y: gy, z: gy });
+    for (const dx of [-18, 0, 18]) slot(cx + dx, gy - SHOP.tableH, gy + 0.1);
+  } else if (kind === 'crates') {
+    const v = Math.floor(cellRnd(region, c, r + 500)() * SHOP.crates.length);
+    parts.push({ kind: 'crates', part: 'body', x: cx, y: gy, z: gy, v });
+    SHOP.crates[v].forEach((h, i) => slot(cx + (i - 1) * 18, gy - h, gy + 0.1));
+  } else {
+    parts.push({ kind: 'rug', part: 'body', x: cx, y: gy - 5, z: yT });
+    slot(cx - 14, gy - 11, gy - 11, 1);
+    slot(cx + 13, gy - 9, gy - 9, 1);
+    slot(cx, gy + 1, gy + 1, 1);
+  }
+  return { parts, slots };
+}
+
+/** Möbel-/Beet-Layout, siehe Kommentar oben. */
+export function furnitureLayout(plants, region) {
+  const d = INDOOR[region];
+  const sorted = chronological(plants);
+  let C = 0, R = d.start[1];
+  const pieces = [], walls = [], open = [];
+  let total = 0;
+  const addCell = (c, r) => {
+    const cell = makeCell(region, c, r);
+    pieces.push(...cell.parts);
+    open.push(...cell.slots);
+    total += cell.slots.length;
+    if (cell.wall) walls.push(cell.wall);
+  };
+  const addColumn = () => {
+    for (const r of rowIndices(region, R)) addCell(C, r);
+    C++;
+  };
+  const addRow = () => {
+    const r = region === 'pflanzenhandlung' ? R + 1 : R;
+    R++;
+    for (let c = 0; c < C; c++) addCell(c, r);
+  };
+  while (C < d.start[0]) addColumn();
+  const grow = () => {
+    const { W, H } = roomSize(region, C, R);
+    if (H / W > d.aspect) addColumn();
+    else addRow();
+  };
+
+  const items = [];
+  for (const plant of sorted) {
+    while (!open.length) grow();
+    const rnd = rngFor(plant.id);
+    const flip = rnd() < 0.5;
+    const s = open.splice(Math.floor(rnd() * open.length), 1)[0];
+    let x = s.x, y = s.y;
+    if (s.jitter) {
+      x += Math.round((rnd() - 0.5) * 2 * s.jitter * 1.5);
+      y += Math.round((rnd() - 0.5) * 2 * s.jitter);
+    }
+    items.push({ plant, x, y, flip, z: s.z + (y - s.y) * 0.01, slot: s.key });
+  }
+  const { W, H } = roomSize(region, C, R);
+  items.sort((a, b) => a.z - b.z || a.x - b.x);
+  pieces.sort((a, b) => a.z - b.z || a.x - b.x);
+  return { W, H, region, items, pieces, walls, cols: C, rows: R, capacity: total };
 }

@@ -4,6 +4,9 @@ import { PLANT_BY_ID } from './plants.js';
 import { PixelArt, makeCanvas, SHADE, BASE, LIGHT, HIGH } from './pixelart.js';
 import { VARIANT_RAMP } from './palette.js';
 
+/** Sprite-Zeile, auf der Stiele ohne Beet-Fuß in der Erde stehen (parts_gewaechshaus.SOIL_Y). */
+export const NOFOOT_ANCHOR = 27;
+
 const SPRITE_BASE = new URL('../../art/sprites/', import.meta.url);
 const MANIFEST_URL = new URL('../data/sprites.json', import.meta.url);
 
@@ -50,7 +53,7 @@ function fileUrl(region, species, name) {
 }
 
 /** Wählt die beste vorhandene Datei laut Manifest. */
-function resolveFile(m, stage, variant) {
+function resolveFile(m, stage, variant, opts = {}) {
   const files = new Set(m.files);
   const stages = [...m.stages].sort((a, b) => a - b);
   let st = stage;
@@ -58,10 +61,17 @@ function resolveFile(m, stage, variant) {
   const cands = [];
   if (variant) cands.push(`stage${st}_${variant}`);
   cands.push(`stage${st}`);
-  for (const f of m.files) if (f.startsWith(`stage${st}_`) && !f.endsWith('_glow')) cands.push(f);
-  const name = cands.find((c) => files.has(c));
+  for (const f of m.files) if (f.startsWith(`stage${st}_`) && !f.endsWith('_glow') && !f.endsWith('_nofoot')) cands.push(f);
+  let name = cands.find((c) => files.has(c));
   if (!name) return null;
-  return { name, glow: m.glow?.includes(name) ? name + '_glow' : null };
+  let glow = m.glow?.includes(name) ? name + '_glow' : null;
+  // Variante ohne eigenen Beet-Fuß (für die gezeichneten Beete im Gewächshaus)
+  const nofoot = !!(opts.nofoot && m.nofoot?.includes(name) && files.has(name + '_nofoot'));
+  if (nofoot) {
+    name += '_nofoot';
+    glow = files.has(name + '_glow') ? name + '_glow' : null;
+  }
+  return { name, glow, nofoot };
 }
 
 function maskedGlow(img, mask) {
@@ -77,13 +87,13 @@ function maskedGlow(img, mask) {
   return c;
 }
 
-async function load(species, stage, variant) {
+async function load(species, stage, variant, opts = {}) {
   const plant = PLANT_BY_ID[species];
   const region = plant?.region || manifest.species?.[species]?.region || 'pflanzenhandlung';
   const m = manifest.species?.[species];
   try {
     if (m) {
-      const f = resolveFile(m, stage, variant);
+      const f = resolveFile(m, stage, variant, opts);
       if (!f) throw new Error('keine Datei');
       const img = await loadImage(fileUrl(m.region, species, f.name));
       let glow = null;
@@ -92,7 +102,7 @@ async function load(species, stage, variant) {
           glow = maskedGlow(img, await loadImage(fileUrl(m.region, species, f.glow)));
         } catch { /* ohne Glow weiter */ }
       }
-      return { img, glow, placeholder: false };
+      return { img, glow, placeholder: false, nofoot: f.nofoot };
     }
     // Nicht im Manifest (evtl. veraltet): Konvention probieren
     const names = variant ? [`stage${stage}_${variant}`, `stage${stage}`] : [`stage${stage}`];
@@ -107,11 +117,15 @@ async function load(species, stage, variant) {
   }
 }
 
-/** Lädt ein Sprite (gecacht). → Promise<{img, glow, placeholder}> */
-export function getSprite(species, stage, variant = null) {
-  const key = `${species}|${stage}|${variant || ''}`;
+/**
+ * Lädt ein Sprite (gecacht). → Promise<{img, glow, placeholder, nofoot}>
+ * opts.nofoot: wenn vorhanden, die Variante ohne eigenen Beet-Fuß laden
+ * (nofoot: true im Ergebnis; Erdpunkt liegt dann bei Zeile NOFOOT_ANCHOR).
+ */
+export function getSprite(species, stage, variant = null, opts = {}) {
+  const key = `${species}|${stage}|${variant || ''}${opts.nofoot ? '|nofoot' : ''}`;
   if (!cache.has(key)) {
-    cache.set(key, load(species, stage, variant).then((s) => {
+    cache.set(key, load(species, stage, variant, opts).then((s) => {
       ready.set(key, s);
       return s;
     }));

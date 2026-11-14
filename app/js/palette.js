@@ -19,6 +19,9 @@ export const RAMPS = {
   petal_blue: ['#1e2a5a', '#30489c', '#4c70d0', '#78a0ec', '#b0ccf8'],
   petal_purple: ['#2e1e4a', '#56388a', '#8060bc', '#a888dc', '#d2bcf2'],
   dark: ['#120e12', '#1e181e', '#2c242a', '#3e343a', '#58484e'],
+  // Regionsrampen aus tools/sprites/palette_<region>.py (für Möbel/Beete)
+  gh_earth: ['#1c1410', '#2c1e16', '#3e2a1e', '#54382a', '#704e3a'],
+  ph_pot_slate: ['#262c3c', '#424a60', '#626e86', '#8894ac', '#b2bcce'],
   // nur App (Boden, Glow)
   glow: ['#3a5a4a', '#6ab890', '#a6f0c0', '#d4ffe0', '#ffffff'],
   lamp: ['#5a4410', '#c89030', '#ffd27a', '#fff0b8', '#ffffff'],

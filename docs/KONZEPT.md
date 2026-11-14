@@ -45,7 +45,8 @@ Beim Start einer Session wählt man:
 
 - Gartenansicht pro Region, filterbar nach Zeitraum (Tag / Woche / Monat / Jahr, ggf. Gesamt) und nach Tag.
 - Die Region **wächst mit der Anzahl der Pflanzen** (neue Parzellen, Regale, Lichtungen). Die Kamera zoomt automatisch passend, Pinch-Zoom für Details.
-- Die Fläche füllt sich **zufällig, aber schön**: Poisson-Disc-Verteilung (keine Klumpen, keine Überlappung), Y-Sortierung für Tiefe, zufälliges Spiegeln.
+- Die Fläche füllt sich **zufällig, aber schön**: Blumenwiese und Wald per Poisson-Disc-Verteilung (keine Klumpen, keine Überlappung), Y-Sortierung für Tiefe, zufälliges Spiegeln.
+- **Pflanzenhandlung:** Die Töpfe stehen auf Möbeln – Wandregale mit drei Böden, Fensterbank + Kommode, Tische, Holzkisten, Teppichinseln am Boden. **Gewächshaus:** Die Pflanzen stehen in Erdbeeten mit Holzrand (Reihen mit Kieswegen, Glaswand dahinter). Jede Pflanze bekommt einen zufälligen freien Stellplatz (Zufall aus der Pflanzen-ID); erst wenn alle Plätze belegt sind, kommt eine Spalte/Reihe Möbel bzw. Beete dazu. Bestehende Pflanzen ziehen dabei nie um (`app/js/layout.js`, Zeichnung in `app/js/furniture.js`).
 - Jede Region hat ihren eigenen Look und eigene Erweiterungslogik.
 
 ### Tageszeit-Licht

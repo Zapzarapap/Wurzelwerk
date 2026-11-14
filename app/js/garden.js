@@ -1,18 +1,21 @@
 // Garten-Renderer: Welt wird 1× in ein Offscreen-Canvas komponiert
-// (Boden → Pflanzen y-sortiert → Licht-Grading → Himmel → Leuchten) und dann
-// mit ganzzahliger Skalierung (Geräte-Pixel pro Welt-Pixel) auf den Bildschirm gebracht.
+// (Boden → Licht-Grading → Himmel in Fenster/Glasdach → Möbel und Pflanzen
+// z-sortiert, ebenfalls gegradet → Leuchten) und dann mit ganzzahliger
+// Skalierung (Geräte-Pixel pro Welt-Pixel) auf den Bildschirm gebracht.
 import { layoutGarden } from './layout.js';
 import { drawGround, drawSky } from './scenery.js';
-import { getSprite } from './sprites.js';
+import { pieceSprite } from './furniture.js';
+import { getSprite, NOFOOT_ANCHOR } from './sprites.js';
 import { makeCanvas } from './pixelart.js';
 
 const groundCache = new Map();
 
-function ground(region, W, H) {
+function ground(region, layout) {
+  const { W, H } = layout;
   const key = `${region}|${W}|${H}`;
   if (!groundCache.has(key)) {
     if (groundCache.size > 8) groundCache.clear();
-    groundCache.set(key, drawGround(region, W, H));
+    groundCache.set(key, drawGround(region, W, H, layout));
   }
   return groundCache.get(key);
 }
@@ -51,12 +54,14 @@ export class GardenRenderer {
     this.region = region;
     this.light = light;
     const layout = layoutGarden(plants, region);
-    const sprites = await Promise.all(layout.items.map((it) => getSprite(it.plant.species, it.plant.stage, it.plant.variant)));
+    // Im Gewächshaus stehen die Pflanzen in gezeichneten Beeten: Sprites ohne eigenen Beet-Fuß
+    const opts = { nofoot: region === 'gewaechshaus' };
+    const sprites = await Promise.all(layout.items.map((it) => getSprite(it.plant.species, it.plant.stage, it.plant.variant, opts)));
     if (token !== this.token || this.destroyed) return;
     layout.items.forEach((it, i) => (it.sprite = sprites[i]));
     const sizeChanged = !this.layout || this.layout.W !== layout.W || this.layout.H !== layout.H;
     this.layout = layout;
-    this.scene = ground(region, layout.W, layout.H);
+    this.scene = ground(region, layout);
     this.compose();
     if (sizeChanged || !this.userMoved) this.fit();
     else this.render();
@@ -71,36 +76,66 @@ export class GardenRenderer {
   }
 
   compose() {
-    const { W, H, items } = this.layout;
+    const { W, H, items, pieces = [] } = this.layout;
     const L = this.light;
-    if (!this.world || this.world.width !== W || this.world.height !== H) this.world = makeCanvas(W, H);
+    if (!this.world || this.world.width !== W || this.world.height !== H) {
+      this.world = makeCanvas(W, H);
+      this.objects = makeCanvas(W, H);
+      this.mask = makeCanvas(W, H);
+    }
     const c = this.world.getContext('2d');
     c.imageSmoothingEnabled = false;
     c.globalCompositeOperation = 'source-over';
     c.globalAlpha = 1;
+    const mult = `rgb(${L.mult.join(',')})`;
+    // 1) Boden/Wände, gegradet, dann Himmel in Fenster und Glasdach
     c.drawImage(this.scene.canvas, 0, 0);
-    const drawItem = (it, img) => {
-      const x = it.x - 16, y = it.y - 31;
-      if (it.flip) {
-        c.save();
-        c.translate(x + 32, y);
-        c.scale(-1, 1);
-        c.drawImage(img, 0, 0);
-        c.restore();
-      } else c.drawImage(img, x, y);
-    };
-    for (const it of items) {
-      // weicher Bodenschatten
-      c.fillStyle = 'rgba(30,20,16,0.18)';
-      c.fillRect(it.x - 6, it.y, 12, 1);
-      drawItem(it, it.sprite.img);
-    }
-    // Licht-Grading
     c.globalCompositeOperation = 'multiply';
-    c.fillStyle = `rgb(${L.mult.join(',')})`;
+    c.fillStyle = mult;
     c.fillRect(0, 0, W, H);
     c.globalCompositeOperation = 'source-over';
     drawSky(c, this.scene, L, W);
+
+    // 2) Möbel und Pflanzen nach z (vor dem Himmel, damit Pflanzen vor Fenstern stehen können)
+    const o = this.objects.getContext('2d');
+    o.imageSmoothingEnabled = false;
+    o.globalCompositeOperation = 'source-over';
+    o.clearRect(0, 0, W, H);
+    const drawItem = (ctx, it, img) => {
+      const x = it.x - 16, y = it.y - (it.sprite.nofoot ? NOFOOT_ANCHOR : 31);
+      if (it.flip) {
+        ctx.save();
+        ctx.translate(x + 32, y);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, 0, 0);
+        ctx.restore();
+      } else ctx.drawImage(img, x, y);
+    };
+    const list = [...pieces.map((p) => ({ z: p.z, piece: p })), ...items];
+    list.sort((a, b) => a.z - b.z || (a.piece ? -1 : 0) - (b.piece ? -1 : 0));
+    for (const e of list) {
+      if (e.piece) {
+        const sp = pieceSprite(e.piece);
+        if (sp) o.drawImage(sp.img, e.piece.x - sp.ax, e.piece.y - sp.ay);
+        continue;
+      }
+      // weicher Bodenschatten
+      o.fillStyle = 'rgba(30,20,16,0.18)';
+      o.fillRect(e.x - 6, e.y, 12, 1);
+      drawItem(o, e, e.sprite.img);
+    }
+    // Grading nur auf die Objekt-Pixel: multiplizieren, dann mit der Alpha-Maske zurückschneiden
+    const m = this.mask.getContext('2d');
+    m.globalCompositeOperation = 'copy';
+    m.drawImage(this.objects, 0, 0);
+    o.globalCompositeOperation = 'multiply';
+    o.fillStyle = mult;
+    o.fillRect(0, 0, W, H);
+    o.globalCompositeOperation = 'destination-in';
+    o.drawImage(this.mask, 0, 0);
+    o.globalCompositeOperation = 'source-over';
+    c.drawImage(this.objects, 0, 0);
+
     // Leuchtendes bleibt hell
     if (L.glow > 0.01) {
       c.globalAlpha = L.glow;
@@ -108,7 +143,7 @@ export class GardenRenderer {
       const halos = [...this.scene.halos];
       for (const it of items)
         if (it.sprite.glow) {
-          drawItem(it, it.sprite.glow);
+          drawItem(c, it, it.sprite.glow);
           halos.push({ x: it.x, y: it.y - 8, r: 14, rgb: [170, 255, 200] });
         }
       c.globalCompositeOperation = 'lighter';

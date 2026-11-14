@@ -1,7 +1,7 @@
 // Service Worker: App-Shell cache-first aus versioniertem Cache, Sprites
 // cache-first, sprites.json network-first. Bei Releases VERSION erhöhen
 // (muss zu js/version.js passen – wird in app/tests geprüft).
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const CACHE = 'wurzelwerk-' + VERSION;
 
 const SHELL = [
@@ -32,6 +32,7 @@ const SHELL = [
   'js/pixelart.js',
   'js/sprites.js',
   'js/scenery.js',
+  'js/furniture.js',
   'js/garden.js',
   'js/chart.js',
   'js/ui.js',

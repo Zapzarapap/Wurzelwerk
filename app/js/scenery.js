@@ -1,8 +1,9 @@
 // Einfache, prozedurale Hintergründe je Region (Welt-Pixel, 1×).
-// Wird später durch gezeichnete Kacheln ersetzt/verschönert.
+// Pflanzenhandlung/Gewächshaus: Wände, Fenster, Böden; die Möbel und Beete
+// selbst kommen aus furniture.js (z-sortiert zwischen den Pflanzen).
 import { makeCanvas } from './pixelart.js';
 import { RAMPS, hexToRgb } from './palette.js';
-import { mulberry32, hashString } from './layout.js';
+import { mulberry32, hashString, SHOP, INDOOR } from './layout.js';
 
 const C = Object.fromEntries(Object.entries(RAMPS).map(([k, v]) => [k, v.map(hexToRgb)]));
 const PLASTER = [[120, 92, 70], [196, 166, 128], [224, 200, 162], [236, 216, 182], [246, 234, 210]];
@@ -38,7 +39,7 @@ class Buf {
 /**
  * → { canvas, glow (canvas), halos: [{x,y,r,rgb}], windows: [{x,y,w,h}], fireflies: [{x,y}], outside: [r,g,b] }
  */
-export function drawGround(region, W, H) {
+export function drawGround(region, W, H, layout = null) {
   const seed = hashString(region);
   const rnd = mulberry32(seed ^ W ^ (H << 8));
   const b = new Buf(W, H);
@@ -47,7 +48,7 @@ export function drawGround(region, W, H) {
   const out = { halos: [], windows: [], fireflies: [], outside: [60, 46, 40] };
 
   if (region === 'pflanzenhandlung') {
-    const wallH = 40;
+    const wallH = SHOP.wallH;
     // Holzboden: Dielen 6 px, versetzte Stöße
     for (let y = wallH; y < H; y++) {
       const row = Math.floor((y - wallH) / 6);
@@ -61,78 +62,143 @@ export function drawGround(region, W, H) {
         b.set(x, y, col);
       }
     }
-    // Wand
+    // Wand: Putz oben, Holzvertäfelung unten, Fußleiste
+    const panelY = 70;
     for (let y = 0; y < wallH; y++)
-      for (let x = 0; x < W; x++) b.set(x, y, noise(x, y, seed) > 0.9 ? PLASTER[3] : PLASTER[2]);
-    b.rect(0, wallH - 4, W, 3, C.wood[2]);
+      for (let x = 0; x < W; x++) {
+        if (y < panelY) b.set(x, y, noise(x, y, seed) > 0.9 ? PLASTER[3] : PLASTER[2]);
+        else {
+          const k = x % 8;
+          b.set(x, y, k === 0 ? C.wood[1] : k === 1 ? C.wood[3] : noise(x, y >> 2, seed + 9) > 0.85 ? C.wood[3] : C.wood[2]);
+        }
+      }
+    b.rect(0, 0, W, 2, C.wood[1]); // Deckenbalken
+    b.rect(0, 2, W, 1, C.wood[0]);
+    b.rect(0, panelY - 2, W, 2, C.wood[3]); // Abschlussleiste der Vertäfelung
+    b.rect(0, panelY - 2, W, 1, C.wood[4]);
+    b.rect(0, panelY, W, 1, C.wood[0]);
+    b.rect(0, wallH - 4, W, 3, C.wood[2]); // Fußleiste
     b.rect(0, wallH - 4, W, 1, C.wood[3]);
     b.rect(0, wallH - 1, W, 1, C.wood[0]);
-    // Fenster und Lampen im Wechsel
-    const n = Math.max(1, Math.floor(W / 64));
-    const step = W / n;
-    for (let i = 0; i < n; i++) {
-      const cx = Math.round(step * (i + 0.5));
-      const w = 26, h = 22, x = cx - w / 2, y = 6;
-      b.rect(x - 2, y - 2, w + 4, h + 4, C.wood[1]);
-      b.rect(x - 1, y - 1, w + 2, h + 2, C.wood[3]);
-      out.windows.push({ x, y, w, h, bars: true });
-      b.rect(x - 3, y + h + 1, w + 6, 2, C.wood[2]); // Fensterbrett
-      // Lampe zwischen den Fenstern
-      if (i < n - 1 || n === 1) {
-        const lx = n === 1 ? Math.min(W - 10, cx + 26) : Math.round(step * (i + 1));
-        b.rect(lx, 0, 1, 10, C.dark[2]);
-        b.rect(lx - 3, 10, 7, 2, C.leaf_deep[1]);
-        b.rect(lx - 4, 12, 9, 1, C.leaf_deep[0]);
-        g.fillStyle = RAMPS.lamp[2];
-        g.fillRect(lx - 1, 13, 3, 1);
-        b.rect(lx - 1, 13, 3, 1, C.lamp[1]);
-        out.halos.push({ x: lx + 0.5, y: 16, r: 26, rgb: [255, 200, 120] });
+    const walls = layout?.walls || [];
+    for (const w of walls) {
+      if (w.kind === 'shelf') {
+        // Wandschatten hinter dem Regal (rechts unten versetzt)
+        for (let y = 36; y < wallH; y++) b.set(w.cx + 31, y, y < panelY ? PLASTER[1] : C.wood[1]);
+        continue;
       }
+      // Fenster mit Bank
+      const ww = 28, wh = 32, x = w.cx - ww / 2, y = 18;
+      b.rect(x - 3, y - 3, ww + 6, wh + 6, C.wood[0]);
+      b.rect(x - 2, y - 2, ww + 4, wh + 4, C.wood[3]);
+      b.rect(x - 2, y - 2, ww + 4, 1, C.wood[4]);
+      b.rect(x - 1, y - 1, ww + 2, wh + 2, C.wood[1]);
+      out.windows.push({ x, y, w: ww, h: wh, bars: true });
+      // Fensterbank: Oberfläche, Kante, Schatten
+      const sy = SHOP.sillY;
+      b.rect(x - 6, sy - 3, ww + 12, 1, C.wood[0]);
+      b.rect(x - 5, sy - 2, ww + 10, 1, C.wood[2]);
+      b.rect(x - 5, sy - 1, ww + 10, 2, C.wood[3]);
+      b.rect(x - 5, sy + 1, ww + 10, 1, C.wood[4]);
+      b.rect(x - 5, sy + 2, ww + 10, 1, C.wood[1]);
+      b.rect(x - 6, sy + 3, ww + 12, 1, C.wood[0]);
+      b.set(x - 6, sy - 2, C.wood[0]); b.set(x - 6, sy - 1, C.wood[0]); b.set(x - 6, sy, C.wood[0]); b.set(x - 6, sy + 1, C.wood[0]); b.set(x - 6, sy + 2, C.wood[0]);
+      b.set(x + ww + 5, sy - 2, C.wood[0]); b.set(x + ww + 5, sy - 1, C.wood[0]); b.set(x + ww + 5, sy, C.wood[0]); b.set(x + ww + 5, sy + 1, C.wood[0]); b.set(x + ww + 5, sy + 2, C.wood[0]);
+      b.rect(x - 4, sy + 4, ww + 8, 1, PLASTER[1]);
+      // Hängelampe über dem Fenster
+      const lx = w.cx;
+      b.rect(lx, 3, 1, 6, C.dark[2]);
+      b.rect(lx - 3, 9, 7, 1, C.leaf_deep[0]);
+      b.rect(lx - 3, 10, 7, 1, C.leaf_deep[2]);
+      b.rect(lx - 4, 11, 9, 1, C.leaf_deep[0]);
+      b.set(lx - 2, 10, C.leaf_deep[3]);
+      g.fillStyle = RAMPS.lamp[2];
+      g.fillRect(lx - 1, 12, 3, 1);
+      b.rect(lx - 1, 12, 3, 1, C.lamp[1]);
+      out.halos.push({ x: lx + 0.5, y: 15, r: 28, rgb: [255, 200, 120] });
     }
-    // Lichterkette an der Wandleiste
-    for (let x = 4; x < W; x += 7) {
-      const y = wallH - 6 + Math.round(Math.sin(x / 7) * 1.2);
-      b.set(x, y, C.lamp[1]);
-      g.fillStyle = ['#ffd27a', '#ffb0a0', '#bfe8ff'][(x / 7) % 3 | 0];
-      g.fillRect(x, y, 1, 1);
-      if (x % 21 === 4) out.halos.push({ x, y, r: 8, rgb: [255, 210, 150] });
+    // Lichterkette unter der Decke, durchhängend zwischen Haken
+    const span = 32;
+    for (let x = 1; x < W - 1; x++) {
+      const t = (x % span) / span;
+      const y = 4 + Math.round(Math.sin(t * Math.PI) * 3);
+      b.set(x, y, C.dark[3]);
+      if (x % span === 0) { b.set(x, 3, C.dark[2]); b.set(x, 4, C.dark[2]); }
+      if (x % 6 === 3) {
+        const cols = ['#ffd27a', '#ffb0a0', '#bfe8ff'];
+        b.set(x, y + 1, C.lamp[1]);
+        g.fillStyle = cols[(x / 6 | 0) % 3];
+        g.fillRect(x, y + 1, 1, 1);
+        if (x % 18 === 3) out.halos.push({ x, y: y + 1, r: 8, rgb: [255, 210, 150] });
+      }
     }
     out.outside = [70, 48, 34];
   } else if (region === 'gewaechshaus') {
-    const roofH = 24;
-    // Beet-Erde mit Furchen
-    for (let y = roofH; y < H; y++)
+    const top = INDOOR.gewaechshaus.top;
+    const glassH = 27, knee = top - 3;
+    // Kiesboden überall (Wege), Beete kommen als Möbel darüber
+    for (let y = knee; y < H; y++)
       for (let x = 0; x < W; x++) {
-        const n = noise(x, y, seed);
-        let col = n > 0.7 ? C.soil[3] : C.soil[2];
-        if ((y - roofH) % 10 === 0) col = C.soil[1];
-        if ((y - roofH) % 10 === 1) col = n > 0.5 ? C.soil[4] : C.soil[3];
+        const n = noise(x, y, seed + 1), n2 = noise(x >> 2, y >> 2, seed + 4);
+        let col = GRAVEL[n2 > 0.72 ? 1 : 2];
+        if (n > 0.93) col = GRAVEL[3];
+        else if (n < 0.04) col = GRAVEL[0];
+        else if (n < 0.12) col = GRAVEL[1];
         b.set(x, y, col);
       }
-    // Kiesweg am Rand + Holzrahmen
-    for (let y = roofH; y < H; y++)
-      for (let x = 0; x < W; x++) {
-        if (x < 5 || x >= W - 5 || y >= H - 3) b.set(x, y, GRAVEL[1 + Math.floor(noise(x, y, seed + 1) * 3)]);
-        else if (x === 5 || x === W - 6 || y === H - 4) b.set(x, y, C.wood[2]);
+    // Trittplatten in den Wegen zwischen den Beetreihen
+    const d = INDOOR.gewaechshaus;
+    for (let r = 0; r * d.rowH + top < H - 8; r++) {
+      const py = top + r * d.rowH + d.rowH - 6;
+      for (let x = 10 + (r % 2) * 9; x < W - 12; x += 19) {
+        if (noise(x, r, seed + 2) < 0.35) continue;
+        for (let j = 0; j < 4; j++) for (let i = 0; i < 8; i++) {
+          const edge = j === 3 || i === 7 ? 1 : j === 0 || i === 0 ? 3 : 2;
+          if ((i === 0 || i === 7) && (j === 0 || j === 3)) continue;
+          b.set(x + i, py + j, edge === 3 ? PLASTER[3] : edge === 1 ? GRAVEL[0] : PLASTER[2]);
+        }
       }
-    b.rect(0, roofH, W, 2, C.wood[1]);
-    // Glasdach
-    b.rect(0, 0, W, roofH, [220, 228, 226]);
-    out.windows.push({ x: 0, y: 0, w: W, h: roofH - 1, bars: false });
-    const panes = Math.max(2, Math.round(W / 22));
+    }
+    // Sockel aus Ziegeln unter der Glaswand
+    for (let y = glassH; y < knee; y++)
+      for (let x = 0; x < W; x++) {
+        const row = y - glassH;
+        const off = (row >> 2) % 2 ? 4 : 0;
+        let col = C.terracotta[2];
+        if (row % 4 === 3 || (x + off) % 8 === 0) col = C.terracotta[1];
+        else if (noise(x, y, seed + 6) > 0.8) col = C.terracotta[3];
+        b.set(x, y, col);
+      }
+    b.rect(0, glassH, W, 1, C.wood[3]);
+    b.rect(0, glassH + 1, W, 1, C.wood[1]);
+    b.rect(0, knee, W, 1, C.terracotta[0]);
+    // Glaswand/Glasdach: Himmel + Sprossen (Sprossen werden nach dem Grading gezeichnet)
+    b.rect(0, 0, W, glassH, [220, 228, 226]);
+    out.windows.push({ x: 0, y: 0, w: W, h: glassH, bars: false });
+    const panes = Math.max(2, Math.round(W / 16));
     for (let i = 0; i <= panes; i++) {
       const x = Math.round((i * (W - 1)) / panes);
-      out.windows.push({ frame: true, x, y: 0, w: 1, h: roofH });
+      out.windows.push({ frame: true, x, y: 0, w: 1, h: glassH });
     }
-    out.windows.push({ frame: true, x: 0, y: 11, w: W, h: 1 });
-    // Laternen
-    for (let x = 18; x < W - 8; x += 56) {
-      b.rect(x, roofH - 2, 1, 6, C.dark[2]);
-      b.rect(x - 2, roofH + 4, 5, 5, C.dark[2]);
-      b.rect(x - 1, roofH + 5, 3, 3, C.lamp[1]);
+    out.windows.push({ frame: true, x: 0, y: 9, w: W, h: 1 });
+    out.windows.push({ frame: true, x: 0, y: 0, w: W, h: 2 });
+    // schräge Dachstreben als Andeutung des Giebels
+    for (let x = 0; x < W; x += 2) {
+      const yy = Math.round(9 - 7 * Math.abs((x / W) * 2 - 1));
+      out.windows.push({ frame: true, x, y: yy, w: 2, h: 1 });
+    }
+    // Seitliche Rahmen
+    for (let y = glassH; y < H; y++) { b.set(0, y, C.dark[3]); b.set(W - 1, y, C.dark[3]); }
+    // Laternen am Sockel (zwischen den Beetspalten)
+    for (let x = d.side; x <= W - d.side; x += d.cellW) {
+      const lx = Math.max(4, Math.min(W - 5, x));
+      b.rect(lx, glassH + 2, 1, 2, C.dark[2]);
+      b.rect(lx - 2, glassH + 4, 5, 6, C.dark[2]);
+      b.rect(lx - 1, glassH + 5, 3, 4, C.lamp[1]);
+      b.set(lx, glassH + 3, C.dark[3]);
       g.fillStyle = RAMPS.lamp[3];
-      g.fillRect(x - 1, roofH + 5, 3, 3);
-      out.halos.push({ x: x + 0.5, y: roofH + 7, r: 24, rgb: [255, 196, 110] });
+      g.fillRect(lx - 1, glassH + 5, 3, 4);
+      out.halos.push({ x: lx + 0.5, y: glassH + 7, r: 24, rgb: [255, 196, 110] });
     }
     out.outside = [52, 40, 34];
   } else if (region === 'wald') {
