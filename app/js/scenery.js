@@ -4,6 +4,7 @@
 import { makeCanvas } from './pixelart.js';
 import { RAMPS, hexToRgb } from './palette.js';
 import { mulberry32, hashString, SHOP, INDOOR } from './layout.js';
+import { fenceArt, benchArt, lanternArt, treeArt } from './decor.js';
 
 const C = Object.fromEntries(Object.entries(RAMPS).map(([k, v]) => [k, v.map(hexToRgb)]));
 const PLASTER = [[120, 92, 70], [196, 166, 128], [224, 200, 162], [236, 216, 182], [246, 234, 210]];
@@ -45,7 +46,8 @@ export function drawGround(region, W, H, layout = null) {
   const b = new Buf(W, H);
   const glow = makeCanvas(W, H);
   const g = glow.getContext('2d');
-  const out = { halos: [], windows: [], fireflies: [], outside: [60, 46, 40] };
+  const out = { halos: [], windows: [], fireflies: [], critters: [], moonbeams: null, outside: [60, 46, 40] };
+  const after = []; // Rand-Deko (PixelArt), wird nach flush() gezeichnet: [art, x, y]
 
   if (region === 'pflanzenhandlung') {
     const wallH = SHOP.wallH;
@@ -239,6 +241,28 @@ export function drawGround(region, W, H, layout = null) {
       g.fillRect(x, y, 1, 1);
       out.halos.push({ x, y, r: 6, rgb: [140, 240, 190] });
     }
+    // Laubhaufen am Boden
+    const leafCols = [C.petal_orange, C.bw_russet, C.petal_yellow, C.wood];
+    for (let i = 0; i < Math.round((W * H) / 900); i++) {
+      const cx = Math.floor(rnd() * W), cy = 42 + Math.floor(rnd() * (H - 44));
+      const col = leafCols[Math.floor(rnd() * leafCols.length)];
+      for (let k = 0; k < 5; k++) {
+        const x = cx + Math.floor(rnd() * 6) - 3, y = cy + Math.floor(rnd() * 3) - 1;
+        b.set(x, y, col[3]); b.set(x + 1, y, col[2]); b.set(x, y + 1, col[1]);
+      }
+    }
+    // Randbäume links und rechts (hinter allen Pflanzen)
+    for (const side of [0, 1]) {
+      for (let k = 0, y = 78 + Math.floor(rnd() * 14); y < H + 10; k++, y += 44 + Math.floor(rnd() * 16)) {
+        const x = side ? W - 16 + Math.floor(rnd() * 4) : -14 - Math.floor(rnd() * 4);
+        after.push([treeArt((k + side) % 2), x, y - 58]);
+      }
+    }
+    for (let i = 0; i < Math.max(5, Math.round((W * H) / 2600)); i++)
+      out.fireflies.push({ x: 6 + Math.floor(rnd() * (W - 12)), y: 30 + Math.floor(rnd() * (H - 34)), p: rnd() * Math.PI * 2 });
+    out.moonbeams = [];
+    for (let i = 0; i < Math.max(2, Math.round(W / 70)); i++)
+      out.moonbeams.push({ x: Math.round(((i + 0.3 + rnd() * 0.4) * W) / Math.max(2, Math.round(W / 70))), w: 6 + Math.floor(rnd() * 8), dx: Math.round(H * 0.35) });
     out.outside = [28, 36, 26];
   } else {
     // Blumenwiese
@@ -262,12 +286,49 @@ export function drawGround(region, W, H, layout = null) {
       const x = Math.floor(rnd() * W), y = Math.floor(rnd() * H);
       b.set(x, y, dots[Math.floor(rnd() * dots.length)]);
     }
+    // Hecke ganz hinten, davor Zaun (nach flush), dann ein Trampelpfad
+    for (let x = 0; x < W; x++) {
+      const top = 3 + Math.round(Math.sin(x / 3.1 + seed) * 1.5 + Math.sin(x / 1.7) * 0.8);
+      for (let y = 0; y < 9; y++) {
+        if (y < top) b.set(x, y, noise(x >> 1, y, seed + 21) > 0.5 ? C.leaf_deep[2] : C.leaf_deep[1]);
+        else if (y === top) b.set(x, y, C.leaf_deep[0]);
+      }
+    }
+    for (let x = 0; x < W; x++) {
+      const y0 = 16 + Math.round(Math.sin(x / 9 + seed) * 1.2), y1 = 23 + Math.round(Math.sin(x / 7 + 2) * 1.2);
+      for (let y = y0; y <= y1; y++) {
+        const n = noise(x, y, seed + 30);
+        let col = n > 0.7 ? C.soil[4] : C.gh_pumpkin_beige[1];
+        if (y === y0) col = C.leaf[1];
+        else if (y === y1) col = C.leaf[3];
+        else if (n < 0.06) col = C.stone[3];
+        else if (n < 0.1) col = C.stone[1];
+        b.set(x, y, col);
+      }
+    }
+    after.push([fenceArt(W), 0, 1]);
+    const bx = 14 + Math.floor(rnd() * Math.max(1, W - 56));
+    after.push([benchArt(), bx, 7]);
+    const posts = [];
+    for (let x = 4; x < W - 2; x += 12) if (x + 3 < bx || x > bx + 28) posts.push(x);
+    if (posts.length) {
+      const px = posts[Math.floor(rnd() * posts.length)];
+      after.push([lanternArt(), px - 2, 6]);
+      out.halos.push({ x: px + 1.5, y: 11, r: 22, rgb: [255, 200, 120] });
+    }
     for (let i = 0; i < Math.max(6, Math.round((W * H) / 1800)); i++)
       out.fireflies.push({ x: Math.floor(rnd() * W), y: 6 + Math.floor(rnd() * (H - 10)), p: rnd() * Math.PI * 2 });
+    // Tagsüber: ein paar Schmetterlinge und Bienen
+    const wings = [[C.petal_white[3], C.petal_white[2]], [C.petal_yellow[3], C.petal_yellow[2]], [C.petal_orange[3], C.petal_orange[1]], [C.petal_blue[3], C.petal_blue[2]]];
+    for (let i = 0; i < Math.max(3, Math.round((W * H) / 7000)); i++) {
+      const wcol = wings[Math.floor(rnd() * wings.length)];
+      out.critters.push({ x: 16 + Math.floor(rnd() * (W - 32)), y: 34 + Math.floor(rnd() * (H - 44)), p: rnd() * Math.PI * 2, bee: rnd() < 0.4, rgb: wcol[0], rgb2: wcol[1] });
+    }
     out.outside = [40, 70, 42];
   }
 
   out.canvas = b.flush();
+  for (const [art, x, y] of after) art.drawTo(b.ctx, x, y, g);
   out.glow = glow;
   return out;
 }

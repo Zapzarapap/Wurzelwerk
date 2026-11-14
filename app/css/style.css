@@ -407,7 +407,7 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
 .session-row canvas, .sprite-empty { width: 32px; height: 32px; flex-shrink: 0; }
 .all-time { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: baseline; font-size: 14px; margin: 8px 0 12px; }
 
-/* --- Garten ------------------------------------------------------------- */
+/* --- Orte --------------------------------------------------------------- */
 .page.garden { max-width: none; height: 100%; display: flex; flex-direction: column; }
 .garden-head {
   padding: calc(var(--safe-top) + 8px) calc(var(--safe-right) + 12px) 8px calc(var(--safe-left) + 12px);
@@ -416,9 +416,19 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
   display: flex; flex-direction: column; gap: 8px;
   z-index: 2;
 }
-.region-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.region-tabs {
+  display: flex; gap: 6px;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  margin: 0 calc(-12px - var(--safe-right)) 0 calc(-12px - var(--safe-left));
+  padding: 0 calc(12px + var(--safe-right)) 3px calc(12px + var(--safe-left));
+  scroll-padding: 0 12px;
+}
+.region-tabs::-webkit-scrollbar { display: none; }
 .region-tabs button {
-  flex: 1;
+  flex: 1 0 auto;
   border: 2px solid var(--line-2);
   background: var(--card);
   border-radius: 8px;
@@ -483,7 +493,7 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
 }
 .plant-info canvas { flex-shrink: 0; background: var(--bg-2); border-radius: 6px; }
 
-/* --- Laden -------------------------------------------------------------- */
+/* --- Shop --------------------------------------------------------------- */
 .intro { margin: -6px 0 14px; font-size: 14px; }
 .shop-region-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
 .shop-region-head h3 { color: var(--ink); text-transform: none; letter-spacing: 0; font-size: 19px; margin-bottom: 2px; }

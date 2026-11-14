@@ -22,9 +22,20 @@ export const RAMPS = {
   // Regionsrampen aus tools/sprites/palette_<region>.py (für Möbel/Beete)
   gh_earth: ['#1c1410', '#2c1e16', '#3e2a1e', '#54382a', '#704e3a'],
   ph_pot_slate: ['#262c3c', '#424a60', '#626e86', '#8894ac', '#b2bcce'],
+  // für Deko (decor.js), ebenfalls aus palette_<region>.py gespiegelt
+  gh_butternut: ['#6a4422', '#b07a40', '#dca462', '#f0c688', '#fae4b8'],
+  gh_pumpkin_beige: ['#6a5030', '#b49460', '#d8bc84', '#ecd8a8', '#f8f0d0'],
+  gh_corn_kernel: ['#6a480c', '#c0861a', '#eebc30', '#f8d85a', '#fdf09c'],
+  bw_white: ['#8c6a66', '#ddd0c8', '#f4eee6', '#fffbf4', '#ffffff'],
+  bw_skyblue: ['#24406e', '#4672b4', '#70a0e2', '#9cc4f4', '#d0e6fc'],
+  bw_russet: ['#3a1410', '#6e2a1a', '#a0442a', '#c8683a', '#e89a5a'],
+  bw_dandelion: ['#5a3a08', '#b07a10', '#eab020', '#fcd440', '#fff08a'],
+  wa_moos: ['#17332a', '#25523a', '#3c7c4a', '#62a85a', '#9ad06c'],
+  wa_glow: ['#0e4a46', '#1a8078', '#38c8b0', '#7aecd0', '#d4fff0'],
   // nur App (Boden, Glow)
   glow: ['#3a5a4a', '#6ab890', '#a6f0c0', '#d4ffe0', '#ffffff'],
   lamp: ['#5a4410', '#c89030', '#ffd27a', '#fff0b8', '#ffffff'],
+  stone: ['#3a3634', '#625c58', '#8a847c', '#b0aaa0', '#d4d0c6'], // Steine (Deko)
 };
 
 export const VARIANT_RAMP = {

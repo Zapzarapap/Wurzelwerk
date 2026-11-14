@@ -5,6 +5,7 @@
 import { layoutGarden } from './layout.js';
 import { drawGround, drawSky } from './scenery.js';
 import { pieceSprite } from './furniture.js';
+import { decorPieces } from './decor.js';
 import { getSprite, NOFOOT_ANCHOR } from './sprites.js';
 import { makeCanvas } from './pixelart.js';
 
@@ -54,6 +55,8 @@ export class GardenRenderer {
     this.region = region;
     this.light = light;
     const layout = layoutGarden(plants, region);
+    // Deko (weicht den Pflanzen aus, siehe decor.js)
+    layout.pieces = [...(layout.pieces || []), ...decorPieces(layout)];
     // Im Gewächshaus stehen die Pflanzen in gezeichneten Beeten: Sprites ohne eigenen Beet-Fuß
     const opts = { nofoot: region === 'gewaechshaus' };
     const sprites = await Promise.all(layout.items.map((it) => getSprite(it.plant.species, it.plant.stage, it.plant.variant, opts)));
@@ -111,12 +114,26 @@ export class GardenRenderer {
         ctx.restore();
       } else ctx.drawImage(img, x, y);
     };
+    const drawPiece = (ctx, p, sp, img) => {
+      const y = p.y - sp.ay;
+      if (p.flip) {
+        ctx.save();
+        ctx.translate(p.x - (img.width - 1 - sp.ax) + img.width, y);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, 0, 0);
+        ctx.restore();
+      } else ctx.drawImage(img, p.x - sp.ax, y);
+    };
     const list = [...pieces.map((p) => ({ z: p.z, piece: p })), ...items];
     list.sort((a, b) => a.z - b.z || (a.piece ? -1 : 0) - (b.piece ? -1 : 0));
+    const glowPieces = [];
     for (const e of list) {
       if (e.piece) {
         const sp = pieceSprite(e.piece);
-        if (sp) o.drawImage(sp.img, e.piece.x - sp.ax, e.piece.y - sp.ay);
+        if (sp) {
+          drawPiece(o, e.piece, sp, sp.img);
+          if (sp.glow || sp.halo) glowPieces.push([e.piece, sp]);
+        }
         continue;
       }
       // weicher Bodenschatten
@@ -141,6 +158,10 @@ export class GardenRenderer {
       c.globalAlpha = L.glow;
       c.drawImage(this.scene.glow, 0, 0);
       const halos = [...this.scene.halos];
+      for (const [p, sp] of glowPieces) {
+        if (sp.glow) drawPiece(c, p, sp, sp.glow);
+        if (sp.halo) halos.push({ x: p.x + (p.flip ? -sp.halo.dx : sp.halo.dx), y: p.y + sp.halo.dy, r: sp.halo.r, rgb: sp.halo.rgb });
+      }
       for (const it of items)
         if (it.sprite.glow) {
           drawItem(c, it, it.sprite.glow);
@@ -153,6 +174,23 @@ export class GardenRenderer {
         gr.addColorStop(1, `rgba(${h.rgb.join(',')},0)`);
         c.fillStyle = gr;
         c.fillRect(h.x - h.r, h.y - h.r, h.r * 2, h.r * 2);
+      }
+      // Mondlicht zwischen den Baumkronen (Wald)
+      if (this.scene.moonbeams && L.glow > 0.3) {
+        c.globalAlpha = 1;
+        for (const b of this.scene.moonbeams) {
+          const gr = c.createLinearGradient(0, 0, 0, H);
+          gr.addColorStop(0, `rgba(170,190,255,${0.11 * L.glow})`);
+          gr.addColorStop(1, 'rgba(170,190,255,0)');
+          c.fillStyle = gr;
+          c.beginPath();
+          c.moveTo(b.x, 18);
+          c.lineTo(b.x + b.w, 18);
+          c.lineTo(b.x + b.w + b.dx, H);
+          c.lineTo(b.x + b.dx, H);
+          c.closePath();
+          c.fill();
+        }
       }
       c.globalCompositeOperation = 'source-over';
       c.globalAlpha = 1;
@@ -340,6 +378,31 @@ export class GardenRenderer {
         c.fillRect(ox + x * s, oy + y * s, s, s);
       }
     }
+    // Schmetterlinge und Bienen (Blumenwiese, tagsüber)
+    const crit = this.scene.critters;
+    if (L && crit?.length && L.glow < 0.5) {
+      const t = this.still ? 0 : performance.now() / 1000;
+      const a = 1 - L.glow * 2;
+      const tint = (rgb) => `rgba(${rgb.map((v, i) => Math.round((v * m[i]) / 255)).join(',')},${a})`;
+      const px = (x, y, col) => { c.fillStyle = col; c.fillRect(ox + x * s, oy + y * s, s, s); };
+      for (const f of crit) {
+        if (f.bee) {
+          const x = Math.round(f.x + Math.sin(t * 0.7 + f.p) * 9 + Math.sin(t * 5 + f.p) * 1);
+          const y = Math.round(f.y + Math.cos(t * 0.9 + f.p) * 5);
+          px(x, y, tint([230, 180, 40]));
+          px(x + 1, y, tint([50, 36, 30]));
+          if (Math.floor(t * 12 + f.p) % 2) px(x, y - 1, tint([240, 244, 255]));
+        } else {
+          const x = Math.round(f.x + Math.sin(t * 0.35 + f.p) * 14);
+          const y = Math.round(f.y + Math.sin(t * 0.5 + f.p * 2) * 6 + Math.sin(t * 2.1 + f.p) * 1.5);
+          const open = Math.floor(t * 4 + f.p) % 2 === 0;
+          px(x, y, tint([60, 40, 40]));
+          px(x, y + 1, tint([60, 40, 40]));
+          if (open) { px(x - 1, y, tint(f.rgb)); px(x + 1, y, tint(f.rgb)); px(x - 1, y + 1, tint(f.rgb2)); px(x + 1, y + 1, tint(f.rgb2)); }
+          else { px(x - 1, y - 1, tint(f.rgb)); px(x + 1, y - 1, tint(f.rgb)); }
+        }
+      }
+    }
     // Auswahlmarkierung
     if (this.selected) {
       const it = this.selected;
@@ -351,11 +414,17 @@ export class GardenRenderer {
 
   _animate() {
     cancelAnimationFrame(this.raf);
-    if (!(this.light?.glow > 0.3 && this.scene?.fireflies.length)) return;
+    // Sparsam: nur wenn etwas lebt (Glühwürmchen nachts, Falter tagsüber), höchstens ~10 fps,
+    // nicht bei verstecktem Tab und nicht bei „Bewegung reduzieren“.
+    const night = this.light?.glow > 0.3 && this.scene?.fireflies.length;
+    const day = this.light?.glow < 0.5 && this.scene?.critters?.length;
+    this.still = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!(night || day) || this.still) return;
+    const step = night ? 80 : 110;
     let last = 0;
     const loop = (t) => {
       if (this.destroyed) return;
-      if (t - last > 80 && !document.hidden) {
+      if (t - last > step && !document.hidden && this.canvas.isConnected) {
         last = t;
         this.render();
       }

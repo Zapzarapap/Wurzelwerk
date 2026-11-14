@@ -135,7 +135,7 @@ export function mount(root) {
     });
     setOut(val);
     page.append(h('section', { class: 'card' },
-      h('h3', {}, 'Tageszeit im Garten'),
+      h('h3', {}, 'Tageszeit in den Orten'),
       h('p', { class: 'muted small' }, 'Das Licht folgt der echten Uhrzeit (Sonnenstand für Deutschland). Hier kannst du andere Tageszeiten ansehen – gilt nur bis zum Neustart.'),
       h('label', { class: 'check' }, live, 'Echtzeit'),
       slider, out,

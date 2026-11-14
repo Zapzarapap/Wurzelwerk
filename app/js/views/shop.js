@@ -1,4 +1,4 @@
-// Laden: Regionen und Pflanzen mit Tokens freischalten.
+// Shop: Regionen und Pflanzen mit Tokens freischalten.
 import { h, clear, icon, spriteEl, confirmDialog, toast, tokenBadge } from '../ui.js';
 import * as store from '../store.js';
 import { REGIONS, plantsOfRegion, PLANT_BY_ID } from '../plants.js';
@@ -10,7 +10,7 @@ export function mount(root) {
     clear(root);
     const bal = store.balance();
     const page = h('div', { class: 'page shop' });
-    page.append(h('header', { class: 'topbar' }, h('h1', {}, 'Laden'), tokenBadge(bal)));
+    page.append(h('header', { class: 'topbar' }, h('h1', {}, 'Shop'), tokenBadge(bal)));
     page.append(h('p', { class: 'muted intro' },
       `Jede Lernminute bringt ${CONFIG.tokensPerMinute} Token. Verdient: ${store.tokensEarned().toLocaleString('de-DE')} · ausgegeben: ${store.tokensSpent().toLocaleString('de-DE')}`));
 

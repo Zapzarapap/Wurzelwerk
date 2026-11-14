@@ -10,11 +10,12 @@ import * as garden from './views/garden.js';
 import * as shop from './views/shop.js';
 import * as settings from './views/settings.js';
 
+// Interne Routen-IDs (garten/laden) bleiben für alte Links, die Beschriftung heißt Orte/Shop.
 const ROUTES = {
   lernen: { view: learn, label: 'Lernen', icon: 'learn' },
   statistik: { view: stats, label: 'Statistik', icon: 'stats' },
-  garten: { view: garden, label: 'Garten', icon: 'garden' },
-  laden: { view: shop, label: 'Laden', icon: 'shop' },
+  garten: { view: garden, label: 'Orte', icon: 'garden' },
+  laden: { view: shop, label: 'Shop', icon: 'shop' },
   einstellungen: { view: settings, label: 'Mehr', icon: 'settings' },
 };
 

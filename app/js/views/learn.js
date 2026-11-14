@@ -106,7 +106,7 @@ export function mount(root, { navigate }) {
     const lockedCount = plantsOfRegion(s.region).length - avail.length;
     if (lockedCount > 0) {
       grid.append(h('button', { class: 'plant-pick more', onclick: () => navigate('laden') },
-        h('span', { class: 'more-n' }, `+${lockedCount}`), h('span', {}, 'im Laden')));
+        h('span', { class: 'more-n' }, `+${lockedCount}`), h('span', {}, 'im Shop')));
     }
     page.append(section('Pflanze', grid));
 
@@ -310,7 +310,7 @@ export function showResult({ session, plants }, navigate) {
     ),
     nothing ? null : h('p', { class: 'muted center' }, plants.map((p) => `${PLANT_BY_ID[p.species]?.name} Stufe ${p.stage}`).join(' · ') + ` → ${REGION_BY_ID[session.region]?.name}`),
     h('div', { class: 'dialog-actions' },
-      nothing ? null : h('button', { class: 'btn secondary', onclick: () => { close(); navigate('garten', { region: session.region }); } }, 'Zum Garten'),
+      nothing ? null : h('button', { class: 'btn secondary', onclick: () => { close(); navigate('garten', { region: session.region }); } }, 'Zu den Orten'),
       h('button', { class: 'btn primary', onclick: () => close() }, 'Fertig'),
     ),
   ));

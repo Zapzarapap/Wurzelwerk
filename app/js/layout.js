@@ -214,11 +214,11 @@ export function makeCell(region, c, r) {
   const d = INDOOR[region];
   const x0 = d.side + c * d.cellW, cx = x0 + d.cellW / 2;
   const parts = [], slots = [];
-  const slot = (x, y, z, jitter = 0) => slots.push({ x, y, z, key: `${c},${r},${slots.length}`, jitter });
+  const slot = (x, y, z, jitter = 0, on = '') => slots.push({ x, y, z, key: `${c},${r},${slots.length}`, jitter, on });
   if (region === 'gewaechshaus') {
     const yT = d.top + r * d.rowH;
     parts.push({ kind: 'bed', part: 'body', x: x0, y: yT, z: yT + BED.top, v: (c * 7 + r * 3) % 4 });
-    for (const row of BED.rows) for (const sx of row.xs) slot(x0 + sx, yT + row.y, yT + row.y, 1);
+    for (const row of BED.rows) for (const sx of row.xs) slot(x0 + sx, yT + row.y, yT + row.y, 1, 'bed');
     // ab und zu eine Gießkanne im Weg unter dem Beet
     const rr = cellRnd(region, c, r);
     if (rr() < 0.28) {
@@ -235,12 +235,12 @@ export function makeCell(region, c, r) {
       parts.push({ kind: 'shelf', part: 'back', x: cx, y: F, z: F });
       SHOP.shelfTiers.forEach((s, t) => {
         if (t > 0) parts.push({ kind: 'shelf', part: 'board' + t, x: cx, y: F, z: F + 0.2 * t });
-        for (const dx of SHOP.shelfDx) slot(cx + dx, s, F + 0.1 + 0.2 * t);
+        for (const dx of SHOP.shelfDx) slot(cx + dx, s, F + 0.1 + 0.2 * t, 0, 'shelf');
       });
     } else {
-      for (const dx of SHOP.sillDx) slot(cx + dx, SHOP.sillY, SHOP.wallH - 4);
+      for (const dx of SHOP.sillDx) slot(cx + dx, SHOP.sillY, SHOP.wallH - 4, 0, 'sill');
       parts.push({ kind: 'sideboard', part: 'body', x: cx, y: F, z: F });
-      for (const dx of SHOP.shelfDx) slot(cx + dx, F - SHOP.sideboardH, F + 0.1);
+      for (const dx of SHOP.shelfDx) slot(cx + dx, F - SHOP.sideboardH, F + 0.1, 0, 'sideboard');
     }
     return { parts, slots, wall: { kind, x0, cx } };
   }
@@ -248,16 +248,16 @@ export function makeCell(region, c, r) {
   const kind = floorKind(c, r);
   if (kind === 'table') {
     parts.push({ kind: 'table', part: 'body', x: cx, y: gy, z: gy });
-    for (const dx of [-18, 0, 18]) slot(cx + dx, gy - SHOP.tableH, gy + 0.1);
+    for (const dx of [-18, 0, 18]) slot(cx + dx, gy - SHOP.tableH, gy + 0.1, 0, 'table');
   } else if (kind === 'crates') {
     const v = Math.floor(cellRnd(region, c, r + 500)() * SHOP.crates.length);
     parts.push({ kind: 'crates', part: 'body', x: cx, y: gy, z: gy, v });
-    SHOP.crates[v].forEach((h, i) => slot(cx + (i - 1) * 18, gy - h, gy + 0.1));
+    SHOP.crates[v].forEach((h, i) => slot(cx + (i - 1) * 18, gy - h, gy + 0.1, 0, 'crate'));
   } else {
     parts.push({ kind: 'rug', part: 'body', x: cx, y: gy - 5, z: yT });
-    slot(cx - 14, gy - 11, gy - 11, 1);
-    slot(cx + 13, gy - 9, gy - 9, 1);
-    slot(cx, gy + 1, gy + 1, 1);
+    slot(cx - 14, gy - 11, gy - 11, 1, 'rug');
+    slot(cx + 13, gy - 9, gy - 9, 1, 'rug');
+    slot(cx, gy + 1, gy + 1, 1, 'rug');
   }
   return { parts, slots };
 }
@@ -308,5 +308,6 @@ export function furnitureLayout(plants, region) {
   const { W, H } = roomSize(region, C, R);
   items.sort((a, b) => a.z - b.z || a.x - b.x);
   pieces.sort((a, b) => a.z - b.z || a.x - b.x);
-  return { W, H, region, items, pieces, walls, cols: C, rows: R, capacity: total };
+  // free: noch freie Stellplätze (für Deko, die einer Pflanze sofort Platz macht)
+  return { W, H, region, items, pieces, walls, cols: C, rows: R, capacity: total, free: open };
 }

@@ -5,6 +5,7 @@
 // zwischen die Pflanzen gezeichnet (siehe layout.js / garden.js).
 import { PixelArt, OUTLINE, SHADE, BASE, LIGHT, HIGH } from './pixelart.js';
 import { SHOP, BED, INDOOR } from './layout.js';
+import { decoSprite } from './decor.js';
 
 const cache = new Map();
 
@@ -227,6 +228,7 @@ const BUILD = { shelf: (p) => shelf(p.part), sideboard, table, crates: (p) => cr
 
 /** Gerendertes Teil (gecacht) → { img, glow, ax, ay }; gezeichnet bei (x - ax, y - ay). */
 export function pieceSprite(p) {
+  if (p.kind === 'deco') return decoSprite(p.part, p.v || 0, p.region || '');
   const key = `${p.kind}|${p.part}|${p.v || 0}`;
   if (!cache.has(key)) {
     const make = BUILD[p.kind];

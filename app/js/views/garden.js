@@ -1,4 +1,4 @@
-// Garten: Ansicht pro Region, Filter Zeitraum + Tag, Tageszeit-Licht.
+// Orte: Ansicht pro Region (Pflanzenhandlung, Gewächshaus, Blumenwiese, Wald), Filter Zeitraum + Tag, Tageszeit-Licht.
 import { h, clear, icon, segmented, spriteEl } from '../ui.js';
 import * as store from '../store.js';
 import { REGIONS, REGION_BY_ID, PLANT_BY_ID, VARIANT_LABELS } from '../plants.js';
@@ -18,7 +18,7 @@ export function mount(root, { navigate, params }) {
   const page = h('div', { class: 'page garden' });
   const head = h('div', { class: 'garden-head' });
   const stageWrap = h('div', { class: 'garden-stage' });
-  const canvas = h('canvas', { class: 'garden-canvas pix', 'aria-label': 'Garten' });
+  const canvas = h('canvas', { class: 'garden-canvas pix', 'aria-label': 'Ort' });
   const info = h('div', { class: 'plant-info hidden' });
   const lightChip = h('div', { class: 'light-chip' });
   const countChip = h('div', { class: 'count-chip' });
@@ -42,9 +42,10 @@ export function mount(root, { navigate, params }) {
   }
 
   function renderHead() {
+    const prevScroll = head.querySelector('.region-tabs')?.scrollLeft || 0;
     clear(head);
     // Regionen
-    const regs = h('div', { class: 'region-tabs' });
+    const regs = h('div', { class: 'region-tabs', role: 'group', 'aria-label': 'Orte' });
     for (const r of REGIONS) {
       const unlocked = store.isRegionUnlocked(r.id);
       regs.append(h('button', {
@@ -55,9 +56,21 @@ export function mount(root, { navigate, params }) {
           hideInfo();
           update(true);
         },
-      }, unlocked ? null : icon('lock', 10), r.short));
+        'aria-pressed': String(r.id === state.region),
+        'aria-label': unlocked ? r.name : `${r.name} (gesperrt, im Shop freischalten)`,
+      }, unlocked ? null : icon('lock', 10), r.name));
     }
     head.append(regs);
+    regs.scrollLeft = prevScroll;
+    // aktiven Reiter ins Bild scrollen (Reiterleiste scrollt horizontal)
+    requestAnimationFrame(() => {
+      const on = regs.querySelector('button.on');
+      if (on && regs.scrollWidth > regs.clientWidth) {
+        const l = on.offsetLeft - regs.offsetLeft, r = l + on.offsetWidth;
+        if (l < regs.scrollLeft + 8) regs.scrollLeft = Math.max(0, l - 12);
+        else if (r > regs.scrollLeft + regs.clientWidth - 8) regs.scrollLeft = r - regs.clientWidth + 12;
+      }
+    });
     // Filter
     const row = h('div', { class: 'filter-row' });
     row.append(segmented(PERIODS, state.kind, (k) => { state.kind = k; state.anchor = new Date(); update(); }, 'small'));
