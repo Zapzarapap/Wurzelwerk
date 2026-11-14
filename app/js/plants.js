@@ -64,7 +64,7 @@ const RAW = [
   ['efeu', 'Efeu', 'wald', 'leaf', []],
   ['heidelbeere', 'Heidelbeerstrauch', 'wald', 'berry', []],
   ['gluehmoos', 'Moospolster mit Glühpilzen', 'wald', 'glowmoss', []],
-  ['maigloeckchen', 'Maiglöckchen', 'wald', 'flower', []],
+  ['maigloeckchen', 'Maiglöckchen', 'wald', 'flower', ['weiss', 'rosa']],
   ['hexenring', 'Hexenring', 'wald', 'glowmoss', []],
   ['walderdbeere', 'Walderdbeere', 'wald', 'berry', []],
   ['baerlauch', 'Bärlauch', 'wald', 'leaf', []],

@@ -9,8 +9,8 @@ from parts_wald import bulb_stem, GROUND
 def porcini(sp, x, cap_y, rx, ry, lean=0.0, ground=GROUND, bright=()):
     """cap_y = Unterkante des Huts."""
     H = ground - cap_y
-    bulb_stem(sp, "cream", x, cap_y, ground, hw_top=max(1.2, rx * 0.42), hw_max=max(1.6, rx * 0.56),
-              hw_foot=max(1.2, rx * 0.4), lean=lean)
+    stem = bulb_stem(sp, "cream", x, cap_y, ground, hw_top=max(1.2, rx * 0.34), hw_max=max(1.6, rx * 0.6),
+                     hw_foot=max(1.2, rx * 0.46), t_max=0.78, lean=lean)
     # helles Röhrenband unter dem Hut
     pores = sp.layer("cream", shading=False)
     pores.rect(round(x - rx) + 1, cap_y, round(x + rx) - 2, cap_y, tone=HIGHLIGHT)
@@ -23,12 +23,13 @@ def porcini(sp, x, cap_y, rx, ry, lean=0.0, ground=GROUND, bright=()):
         if (px, py) in cap.pixels:
             hl.px(px, py, t)
     # Stielnetz: ein paar helle Punkte
+    # Stielnetz: feines helles Netz im oberen Stieldrittel, dunkle Schattenseite rechts
     net = sp.layer("cream", outline=False, shading=False)
-    for i in range(1, max(2, H // 2)):
-        yy = cap_y + 1 + i * 2
-        xx = round(x - rx * 0.25 + (i % 2))
-        if yy < ground - 1 and rx >= 4:
-            net.px(xx, yy, LIGHT)
+    if rx >= 4:
+        for (px, py) in stem.pixels:
+            if cap_y + 1 < py < cap_y + 1 + H * 0.45 and (px + 2 * py) % 4 == 0 \
+                    and (px - 1, py) in stem.pixels and (px + 1, py) in stem.pixels:
+                net.px(px, py, LIGHT)
 
 
 def draw(stage: int) -> Sprite:

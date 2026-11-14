@@ -1,44 +1,75 @@
-"""Butterpilz – Wald. Gelbbraun-schleimig glänzender Hut, Ring am Stiel."""
+"""Butterpilz – Wald. Flacher, gelbbraun-schleimig glänzender Hut mit kleinem Buckel,
+schlanker Stiel mit hängendem Ring (Manschette), gelbe Röhren."""
 REGION = "wald"
 
-from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT
+import math
+from pixel import Sprite, SHADE, BASE, LIGHT, HIGHLIGHT, OUTLINE
 from parts import dome, forest_ground
-from parts_wald import bulb_stem, GROUND
+from parts_wald import GROUND
 
 
-def butter(sp, x, cap_y, rx, ry, stem_hw, ring=True, lean=0.0, ground=GROUND):
+def butter(sp, x, cap_y, rx, ry, sw, ring=True, lean=0.0, ground=GROUND):
+    """cap_y = Unterkante Hut; sw = Stielbreite in px."""
     H = ground - cap_y
-    bulb_stem(sp, "cream", x, cap_y, ground, stem_hw, stem_hw + 0.4, stem_hw + 0.1, t_max=0.5, lean=lean)
+    st = sp.layer("cream")
+    for y in range(cap_y, ground + 1):
+        t = (y - cap_y) / max(H, 1)
+        c = x + lean * t
+        w = sw + (1 if t > 0.8 and sw >= 2 else 0)
+        x0 = round(c - w / 2)
+        st.rect(x0, y, x0 + w - 1, y)
+    # Stiel oberhalb des Rings gelblich, unten bräunlich gepunktet
+    tint = sp.layer("wa_pfiffer", outline=False, shading=False)
+    ring_y = cap_y + max(2, round(H * 0.32))
+    for y in range(cap_y + 1, ground):
+        c = x + lean * (y - cap_y) / max(H, 1)
+        for xx in range(round(c - sw / 2), round(c - sw / 2) + sw):
+            if y < ring_y and (xx, y) in st.pixels:
+                tint.px(xx, y, HIGHLIGHT)
+
     if ring and H >= 5:
         r = sp.layer("cream")
-        ry_ = cap_y + max(3, round(H * 0.42))
-        r.ellipse(x + lean * 0.4, ry_, stem_hw + 1.9, 1.3)
-    # gelbe Röhren unter dem Hut
+        c = x + lean * (ring_y - cap_y) / max(H, 1)
+        x0 = round(c - sw / 2)
+        r.rect(x0 - 1, ring_y, x0 + sw, ring_y, tone=LIGHT)
+        r.rect(x0 - 1, ring_y + 1, x0 + sw, ring_y + 1, tone=SHADE)
+        if sw >= 2:
+            r.px(x0 - 1, ring_y + 2, SHADE)
+            r.px(x0 + sw, ring_y + 2, SHADE)
+    # gelbe Röhren
     pores = sp.layer("wa_pfiffer", shading=False)
     pores.rect(round(x - rx) + 1, cap_y, round(x + rx) - 2, cap_y, tone=BASE)
     cap = sp.layer("wa_butter")
     dome(cap, x, cap_y - 1, rx, ry)
-    # Schleim-Glanz: helle Lichter oben links
+    # flacher Buckel in der Mitte
+    top = min(py for (_, py) in cap.pixels)
+    if rx >= 4:
+        for xx in range(round(x - rx * 0.3), round(x + rx * 0.2)):
+            cap.px(xx, top - 1)
+    # nasser Glanz: kurzer heller Bogen oben links + weißer Glanzpunkt
     g = sp.layer("wa_butter", outline=False, shading=False)
-    gl = sp.layer("cream", outline=False, shading=False)
-    top = cap_y - 1 - ry
-    for (dx, dy) in ((-0.45, 0.35), (-0.3, 0.25)):
-        p = (round(x + dx * rx), round(top + dy * ry * 1.5))
-        if p in cap.pixels:
-            g.px(*p, HIGHLIGHT)
-    p = (round(x - 0.45 * rx), round(top + 0.35 * ry * 1.5))
-    if rx >= 4 and p in cap.pixels:
-        gl.px(*p, HIGHLIGHT)
-    if rx >= 5:
-        p2 = (round(x + 0.3 * rx), round(top + 0.5 * ry * 1.5))
-        if p2 in cap.pixels:
+    top = min(py for (_, py) in cap.pixels)
+    if rx >= 3:
+        arc = [(round(x - rx * 0.62), top + 2), (round(x - rx * 0.5), top + 1), (round(x - rx * 0.3), top + 1)]
+        if rx >= 6:
+            arc += [(round(x - rx * 0.12), top + 1), (round(x - rx * 0.75), top + 3)]
+        for p in arc:
+            if p in cap.pixels:
+                g.px(*p, HIGHLIGHT)
+        w = sp.layer("cream", outline=False, shading=False)
+        p = (round(x - rx * 0.5), top + 1)
+        if rx >= 5 and p in cap.pixels:
+            w.px(*p, HIGHLIGHT)
+        # zweiter, kleinerer Glanz rechts
+        p2 = (round(x + rx * 0.4), top + 2)
+        if rx >= 5 and p2 in cap.pixels:
             g.px(*p2, LIGHT)
-    # dunklerer Hutrand rechts unten
+            g.px(p2[0] + 1, p2[1], LIGHT)
+    # Hutrand dunkler (schleimige Huthaut läuft über den Rand)
     d = sp.layer("wa_butter", outline=False, shading=False)
-    for k in range(int(ry * 0.5)):
-        p = (round(x + rx - 1.2), round(cap_y - 2 - k))
-        if p in cap.pixels:
-            d.px(*p, SHADE)
+    for xx in range(round(x - rx) + 1, round(x + rx) - 1):
+        if (xx, cap_y - 1) in cap.pixels and xx > x:
+            d.px(xx, cap_y - 1, SHADE)
 
 
 def draw(stage: int) -> Sprite:
@@ -46,18 +77,18 @@ def draw(stage: int) -> Sprite:
     forest_ground(sp, w=(11 if stage >= 4 else 8))
     if stage == 1:
         b = sp.layer("cream")
-        b.ellipse(15.5, 27.2, 1.3, 1.6)
+        b.rect(15, 26, 16, 28)
         c = sp.layer("wa_butter")
-        dome(c, 15.5, 25.6, 2.4, 1.5)
+        dome(c, 15.5, 25.6, 2.4, 1.6)
     elif stage == 2:
-        butter(sp, 15.5, 24, 3.4, 2.4, 1.1, ring=False)
+        butter(sp, 15.5, 24, 3.6, 2.2, 2, ring=False)
     elif stage == 3:
-        butter(sp, 15.5, 21, 5.2, 3.0, 1.5, ring=True)
+        butter(sp, 15.5, 20, 5.6, 2.8, 2)
     elif stage == 4:
-        butter(sp, 14.5, 18, 7, 3.8, 2.0, lean=0.5)
-        butter(sp, 24.5, 25, 2.6, 1.8, 0.9, ring=False)
+        butter(sp, 14.5, 16, 7.6, 3.4, 3, lean=0.4)
+        butter(sp, 24.5, 24, 3.0, 1.8, 2, ring=False)
     else:
-        butter(sp, 23.5, 21, 5, 3.0, 1.5, lean=0.5)
-        butter(sp, 5.5, 25, 2.8, 1.9, 1.0, ring=False)
-        butter(sp, 13.5, 16, 9.5, 4.8, 2.5, lean=-0.6)
+        butter(sp, 24, 19, 5.2, 2.6, 2, lean=0.6)
+        butter(sp, 5.5, 24, 3.0, 1.8, 2, ring=False)
+        butter(sp, 13.5, 13, 10, 4.0, 3, lean=-0.6)
     return sp
