@@ -5,6 +5,7 @@ import * as store from '../store.js';
 import { REGIONS, plantsOfRegion, PLANT_BY_ID } from '../plants.js';
 import { CONFIG } from '../config.js';
 import { hasRealSprites } from '../sprites.js';
+import { openPlantPreview } from './plantpreview.js';
 
 export function mount(root) {
   function render() {
@@ -22,7 +23,7 @@ export function mount(root) {
       const incl = (CONFIG.includedWithRegion[r.id] || []).map((id) => PLANT_BY_ID[id]?.name).filter(Boolean);
       card.append(h('div', { class: 'shop-region-head' },
         regionMarker(r.id, 1),
-        h('div', { class: 'grow' }, h('h3', {}, r.name), h('p', { class: 'muted small' }, r.desc, !unlocked && incl.length ? ` Inklusive ${incl.join(', ')}.` : '')),
+        h('div', { class: 'grow' }, h('h3', { class: 'pname' }, r.label), h('p', { class: 'muted small' }, r.desc, !unlocked && incl.length ? ` Inklusive ${incl.join(', ')}.` : '')),
         unlocked ? h('span', { class: 'owned' }, 'Freigeschaltet')
           : h('button', {
             class: 'btn primary small price',
@@ -35,9 +36,11 @@ export function mount(root) {
       for (const p of plantsOfRegion(r.id)) {
         const have = store.unlocked().species.has(p.id);
         const can = unlocked && !have && bal >= p.price;
-        grid.append(h('div', { class: 'shop-item' + (have ? ' have' : '') },
-          spriteEl(p.id, 5, p.variants[0] || null, 2),
-          h('div', { class: 'shop-name' }, p.name),
+        // Ganze Kachel antippbar → Vorschau (v0.5.3); der Preis-Button kauft direkt wie bisher.
+        grid.append(h('div', { class: 'shop-item' + (have ? ' have' : ''), 'data-species': p.id, onclick: () => openPlantPreview(p.id) },
+          h('button', { class: 'shop-peek', 'aria-label': `Vorschau: ${p.name}`, 'aria-haspopup': 'dialog' },
+            spriteEl(p.id, 5, p.variants[0] || null, 2),
+            h('span', { class: 'shop-name pname' }, p.label)),
           !hasRealSprites(p.id) ? h('div', { class: 'wip' }, 'Skizze') : null,
           have ? h('div', { class: 'owned small' }, unlocked ? 'Frei' : 'Gekauft')
             : h('button', {
@@ -45,7 +48,7 @@ export function mount(root) {
               'aria-label': `${p.name} für ${p.price} Tokens freischalten`,
               disabled: !can,
               title: !unlocked ? 'Erst die Region freischalten' : bal < p.price ? 'Nicht genug Tokens' : '',
-              onclick: () => buy('plant', p.id, p.name, p.price),
+              onclick: (e) => { e.stopPropagation(); buy('plant', p.id, p.name, p.price); },
             }, unlocked ? null : icon('lock', 12), icon('coin', 12), String(p.price))));
       }
       card.append(grid);

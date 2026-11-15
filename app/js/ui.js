@@ -63,10 +63,40 @@ export function openSheet(build, { onClose } = {}) {
     onClose?.(val);
   };
   backdrop.addEventListener('click', () => close(undefined));
+  swipeToClose(panel, () => close(undefined));
   panel.append(h('div', { class: 'sheet-grip' }), build(close));
   sheetRoot.append(backdrop, panel);
   requestAnimationFrame(() => panel.querySelector('[autofocus]')?.focus());
   return close;
+}
+
+/**
+ * Sheet nach unten wischen schließt es (ab 0.5.3, gilt für alle Sheets). Nur wenn der Inhalt
+ * ganz oben steht – sonst scrollt die Geste wie gewohnt. Schwelle: 90 px oder ein schneller Wisch.
+ */
+export const SWIPE_CLOSE_PX = 90;
+export function swipeToClose(panel, onClose) {
+  let y0 = null, t0 = 0, dy = 0;
+  const reset = () => { panel.style.transition = 'transform 0.15s ease-out'; panel.style.transform = ''; };
+  panel.addEventListener('touchstart', (e) => {
+    y0 = panel.scrollTop <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
+    t0 = e.timeStamp; dy = 0;
+  }, { passive: true });
+  panel.addEventListener('touchmove', (e) => {
+    if (y0 == null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy < -6) { y0 = null; reset(); return; } // nach oben: normal scrollen
+    if (dy > 0) { panel.style.transition = 'none'; panel.style.transform = `translateY(${dy}px)`; }
+  }, { passive: true });
+  const end = (e) => {
+    if (y0 == null) return;
+    y0 = null;
+    const fast = dy > 40 && e.timeStamp - t0 < 250;
+    if (dy > SWIPE_CLOSE_PX || fast) onClose();
+    else reset();
+  };
+  panel.addEventListener('touchend', end);
+  panel.addEventListener('touchcancel', () => { y0 = null; reset(); });
 }
 
 export function confirmDialog({ title, text, ok = 'OK', cancel = 'Abbrechen', danger = false, extra = null }) {
@@ -323,6 +353,24 @@ const ICONS = {
   close: [
     '............', '............', '..#......#..', '...#....#...', '....#..#....', '.....##.....',
     '.....##.....', '....#..#....', '...#....#...', '..#......#..', '............', '............',
+  ],
+  infinity: [ // Unendlich (Endless-Modus)
+    '............',
+    '............',
+    '............',
+    '.###....###.',
+    '#...#..#...#',
+    '#....##....#',
+    '#....##....#',
+    '#...#..#...#',
+    '.###....###.',
+    '............',
+    '............',
+    '............',
+  ],
+  check: [
+    '............', '............', '..........#.', '.........##.', '........##..', '.#.....##...',
+    '.##...##....', '..##.##.....', '...###......', '....#.......', '............', '............',
   ],
   warn: [
     '.....##.....', '.....##.....', '....#..#....', '....#..#....', '...#.##.#...', '...#.##.#...',

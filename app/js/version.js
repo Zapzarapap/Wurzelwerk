@@ -1,2 +1,2 @@
 // Bei jedem Release erhöhen – steuert auch den Service-Worker-Cache (sw.js).
-export const APP_VERSION = '0.5.2';
+export const APP_VERSION = '0.5.3';

@@ -16,6 +16,19 @@ export function lightView(L) {
   return { label, icon };
 }
 
+/** Inhalt der Info-Karte zu einer angetippten Pflanze (exportiert für tools/check_overflow.py). */
+export function plantInfoContent(p, { flip = false, onClose } = {}) {
+  const sp = PLANT_BY_ID[p.species];
+  return [
+    spriteEl(p.species, p.stage, p.variant, 2, { flip }),
+    h('div', { class: 'grow info-text' },
+      h('strong', { class: 'pname' }, sp?.label || p.species, p.variant ? h('span', { class: 'muted' }, ' · ' + (VARIANT_LABELS[p.variant] || p.variant)) : null),
+      h('div', { class: 'muted small' }, `Stufe ${p.stage} · ${fmtDuration(p.minutes * 60000)} · ${fmtDate(p.createdAt)}`),
+      h('div', { class: 'small info-tag' }, h('span', { class: 'dot', style: { background: store.tagColor(p.tagId) } }), h('span', { class: 'tname' }, store.tagName(p.tagId)))),
+    h('button', { class: 'icon-btn small', 'aria-label': 'Schließen', onclick: () => onClose?.() }, icon('close', 24)),
+  ];
+}
+
 const PERIODS = [['day', 'Tag'], ['week', 'Woche'], ['month', 'Monat'], ['year', 'Jahr'], ['all', 'Gesamt']];
 const state = { region: null, kind: 'all', anchor: new Date(), tag: '' };
 
@@ -68,7 +81,7 @@ export function mount(root, { navigate, params }) {
         },
         'aria-pressed': String(r.id === state.region),
         'aria-label': unlocked ? r.name : `${r.name} (gesperrt, im Shop freischalten)`,
-      }, regionMarker(r.id, 1), h('span', {}, r.name), unlocked ? null : icon('lock', 12)));
+      }, regionMarker(r.id, 1), h('span', { class: 'rtab-name' }, r.name), unlocked ? null : icon('lock', 12)));
     }
     head.append(regs);
     regs.scrollLeft = prevScroll;
@@ -134,16 +147,10 @@ export function mount(root, { navigate, params }) {
 
   function showInfo(it) {
     if (!it) return hideInfo();
-    const p = it.plant;
-    const sp = PLANT_BY_ID[p.species];
-    clear(info).append(
-      spriteEl(p.species, p.stage, p.variant, 2, { flip: it.flip }),
-      h('div', { class: 'grow' },
-        h('strong', {}, sp?.name || p.species, p.variant ? h('span', { class: 'muted' }, ' · ' + (VARIANT_LABELS[p.variant] || p.variant)) : null),
-        h('div', { class: 'muted small' }, `Stufe ${p.stage} · ${fmtDuration(p.minutes * 60000)} · ${fmtDate(p.createdAt)}`),
-        h('div', { class: 'small' }, h('span', { class: 'dot', style: { background: store.tagColor(p.tagId) } }), ' ', store.tagName(p.tagId))),
-      h('button', { class: 'icon-btn small', 'aria-label': 'Schließen', onclick: () => { renderer.selected = null; renderer.render(); hideInfo(); } }, icon('close', 24)),
-    );
+    clear(info).append(...plantInfoContent(it.plant, {
+      flip: it.flip,
+      onClose: () => { renderer.selected = null; renderer.render(); hideInfo(); },
+    }));
     info.classList.remove('hidden');
   }
   function hideInfo() {

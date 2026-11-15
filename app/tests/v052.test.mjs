@@ -273,9 +273,9 @@ test('Service Worker: wartet auf „Neu laden“ statt sofort zu übernehmen (au
   ]);
 });
 
-test('Version 0.5.2', () => {
-  assert.match(readFileSync(join(APP, 'sw.js'), 'utf8'), /const VERSION = '0\.5\.2'/);
-  assert.match(readFileSync(join(APP, 'js/version.js'), 'utf8'), /APP_VERSION = '0\.5\.2'/);
+test('Version mindestens 0.5.2 (exakte Version: Test des jeweiligen Releases)', () => {
+  const v = /const VERSION = '([^']+)'/.exec(readFileSync(join(APP, 'sw.js'), 'utf8'))[1].split('.').map(Number);
+  assert.ok(v[0] > 0 || v[1] > 5 || (v[1] === 5 && v[2] >= 2), v.join('.'));
 });
 
 // --- 7 Weltrand --------------------------------------------------------------------

@@ -121,7 +121,7 @@ export function mount(root) {
       tagCard.append(h('div', { class: 'tag-row', style: { '--tag': store.tagColor(b.tagId) } },
         h('div', { class: 'tag-row-head' },
           h('span', { class: 'dot' }),
-          h('span', { class: 'name' }, store.tagName(b.tagId)),
+          h('span', { class: 'name tname' }, store.tagName(b.tagId)),
           h('span', { class: 'dur' }, fmtDuration(b.ms)),
           h('span', { class: 'pct' }, `${Math.round(b.share * 100)} %`)),
         h('div', { class: 'tag-bar' }, h('div', { style: { width: `${Math.max(1, b.share * 100)}%` } }))));
@@ -142,9 +142,9 @@ export function mount(root) {
         card.append(h('div', { class: 'session-row' },
           p ? spriteEl(p.species, p.stage, p.variant, 1) : h('span', { class: 'sprite-empty' }),
           h('div', { class: 'grow' },
-            h('div', { class: 'session-tag' }, h('span', { class: 'dot', style: { background: store.tagColor(s.tagId) } }), h('span', { class: 'ellipsis' }, store.tagName(s.tagId))),
-            h('div', { class: 'muted small' }, lbl.range,
-              lbl.part ? h('span', { class: 'part' }, ` · ${lbl.part}`) : ` · ${nPl > 1 ? nPl + '× ' : ''}${PLANT_BY_ID[s.species]?.name || ''}`)),
+            h('div', { class: 'session-tag' }, h('span', { class: 'dot', style: { background: store.tagColor(s.tagId) } }), h('span', { class: 'tname' }, store.tagName(s.tagId))),
+            h('div', { class: 'muted small pname' }, lbl.range,
+              lbl.part ? h('span', { class: 'part' }, ` · ${lbl.part}`) : ` · ${nPl > 1 ? nPl + '× ' : ''}${PLANT_BY_ID[s.species]?.label || ''}`)),
           h('div', { class: 'dur' + (lbl.part ? ' partial' : '') }, fmtDuration(msDay), lbl.part ? h('div', { class: 'of' }, `von ${fmtDuration(s.minutes * 60000)}`) : null),
           h('button', {
             class: 'icon-btn small', 'aria-label': 'Session löschen',

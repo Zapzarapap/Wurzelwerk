@@ -1,5 +1,5 @@
 // Lernen: Session einrichten und laufende Session anzeigen.
-import { h, clear, icon, spriteEl, segmented, confirmDialog, openSheet, tokenBadge, toast, regionMarker } from '../ui.js';
+import { h, clear, icon, spriteEl, confirmDialog, openSheet, tokenBadge, toast, regionMarker } from '../ui.js';
 import * as store from '../store.js';
 import { CONFIG } from '../config.js';
 import { REGIONS, plantsOfRegion, PLANT_BY_ID, REGION_BY_ID, VARIANT_LABELS } from '../plants.js';
@@ -86,7 +86,7 @@ export function mount(root, { navigate }) {
         class: 'chip' + (t.id === s.tagId ? ' on' : ''),
         style: { '--tag': t.color },
         onclick: () => saveSetup({ tagId: t.id }),
-      }, h('span', { class: 'dot' }), h('span', { class: 'chip-label' }, t.name)));
+      }, h('span', { class: 'dot' }), h('span', { class: 'chip-label tname' }, t.name)));
     }
     tagRow.append(h('button', {
       class: 'chip add',
@@ -105,7 +105,7 @@ export function mount(root, { navigate }) {
         class: 'region-card ' + r.id + (r.id === s.region ? ' on' : '') + (unlocked ? '' : ' locked'),
         onclick: () => (unlocked ? saveSetup({ region: r.id, species: null }) : navigate('laden')),
         'aria-label': unlocked ? r.name : `${r.name} – gesperrt, ${CONFIG.regionPrices[r.id]} Tokens im Shop`,
-      }, regionMarker(r.id, 1), h('span', { class: 'rname' }, hyphenName(r.name)),
+      }, regionMarker(r.id, 1), h('span', { class: 'rname' }, r.label),
       unlocked ? null : h('span', { class: 'rlock' }, icon('lock', 12), h('span', {}, String(CONFIG.regionPrices[r.id])), icon('coin', 12))));
     }
     page.append(section('Region', regRow));
@@ -117,7 +117,8 @@ export function mount(root, { navigate }) {
       grid.append(h('button', {
         class: 'plant-pick' + (p.id === s.species ? ' on' : ''),
         onclick: () => saveSetup({ species: p.id }),
-      }, spriteEl(p.id, 5, p.variants[0] || null, 2), h('span', {}, p.name)));
+        'aria-label': p.name,
+      }, spriteEl(p.id, 5, p.variants[0] || null, 2), h('span', { class: 'pname' }, p.label)));
     }
     const lockedCount = plantsOfRegion(s.region).length - avail.length;
     if (lockedCount > 0) {
@@ -128,7 +129,16 @@ export function mount(root, { navigate }) {
 
     // Modus
     const modeBox = h('div', { class: 'mode-box' });
-    modeBox.append(segmented([['timer', 'Timer'], ['endless', 'Endless']], s.mode, (m) => saveSetup({ mode: m })));
+    // Zwei eigenständige Karten statt Segmented Control (v0.5.3)
+    const modeCard = (m, label, sub, ic) => h('button', {
+      class: 'mode-card' + (s.mode === m ? ' on' : ''),
+      role: 'radio',
+      'aria-checked': s.mode === m ? 'true' : 'false',
+      onclick: () => saveSetup({ mode: m }),
+    }, icon(ic, 24), h('span', { class: 'mode-text' }, h('span', { class: 'mode-label' }, label), h('span', { class: 'mode-sub' }, sub)));
+    modeBox.append(h('div', { class: 'mode-cards', role: 'radiogroup', 'aria-label': 'Modus' },
+      modeCard('timer', 'Timer', 'mit Ziel', 'learn'),
+      modeCard('endless', 'Endless', 'offen', 'infinity')));
     if (s.mode === 'timer') {
       const dur = h('div', { class: 'chips dur' });
       for (const m of CONFIG.timerPresets) {
@@ -181,8 +191,8 @@ export function mount(root, { navigate }) {
 
     page.append(
       h('div', { class: 'session-head' },
-        h('span', { class: 'tag-pill', style: { '--tag': tag?.color || '#999' } }, h('span', { class: 'dot' }), store.tagName(a.tagId)),
-        h('span', { class: 'muted' }, `${plant?.name || a.species}${a.variant ? ' · ' + (VARIANT_LABELS[a.variant] || a.variant) : ''} · ${a.mode === 'timer' ? 'Timer ' + fmtDuration(a.targetMin * 60000) : 'Endless'}`),
+        h('span', { class: 'tag-pill', style: { '--tag': tag?.color || '#999' } }, h('span', { class: 'dot' }), h('span', { class: 'tname' }, store.tagName(a.tagId))),
+        h('span', { class: 'muted pname' }, `${plant?.label || a.species}${a.variant ? ' · ' + (VARIANT_LABELS[a.variant] || a.variant) : ''} · ${a.mode === 'timer' ? 'Timer ' + fmtDuration(a.targetMin * 60000) : 'Endless'}`),
       ),
       stageBox,
       doneRow,
@@ -320,7 +330,7 @@ export function showResult({ session, plants }, navigate) {
       h('div', {}, h('div', { class: 'big' }, fmtDuration(session.minutes * 60000)), h('div', { class: 'label' }, 'gelernt')),
       h('div', {}, h('div', { class: 'big token-big' }, icon('coin', 24), '+' + session.tokens), h('div', { class: 'label' }, session.tokens === 1 ? 'Token' : 'Tokens')),
     ),
-    nothing ? null : h('p', { class: 'muted center' }, plantSummary(plants, Object.fromEntries(plants.map((p) => [p.species, PLANT_BY_ID[p.species]?.name]))) + ` → ${REGION_BY_ID[session.region]?.name}`),
+    nothing ? null : h('p', { class: 'muted center pname result-summary' }, plantSummary(plants, Object.fromEntries(plants.map((p) => [p.species, PLANT_BY_ID[p.species]?.label]))) + ` → ${REGION_BY_ID[session.region]?.name}`),
     h('div', { class: 'dialog-actions' },
       nothing ? null : h('button', { class: 'btn secondary', onclick: () => { close(); navigate('garten', { region: session.region }); } }, 'Zu den Orten'),
       h('button', { class: 'btn primary', onclick: () => close() }, 'Fertig'),
@@ -348,8 +358,3 @@ export function chime() {
   } catch { /* egal */ }
 }
 
-
-/** Weiche Trennstellen, damit lange Ortsnamen in schmalen Karten sauber umbrechen. */
-function hyphenName(name) {
-  return name.replace('Pflanzenhandlung', 'Pflanzen\u00adhandlung').replace('Gewächshaus', 'Gewächs\u00adhaus').replace('Blumenwiese', 'Blumen\u00adwiese');
-}

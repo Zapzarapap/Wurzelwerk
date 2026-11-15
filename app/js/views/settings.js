@@ -101,7 +101,7 @@ export function mount(root) {
       const mins = store.S.sessions.filter((s) => s.tagId === t.id).reduce((a, s) => a + s.minutes, 0);
       tagList.append(h('button', { class: 'tag-item', onclick: () => editTag(t) },
         h('span', { class: 'dot big', style: { background: t.color } }),
-        h('span', { class: 'grow tag-name' }, t.name),
+        h('span', { class: 'grow tag-name tname' }, t.name),
         h('span', { class: 'muted small nowrap' }, mins ? (mins < 60 ? `${mins} min` : `${Math.round(mins / 60)} h`) : ''),
         icon('edit', 14)));
     }

@@ -8,10 +8,10 @@
 import { CONFIG } from './config.js';
 
 export const REGIONS = [
-  { id: 'pflanzenhandlung', name: 'Pflanzenhandlung', short: 'Pflanzenhandlung', desc: 'Zimmerpflanzen in Töpfen, Regale und Hängeampeln.' },
-  { id: 'gewaechshaus', name: 'Gewächshaus', short: 'Gewächshaus', desc: 'Gemüse und Kräuter in Beeten.' },
-  { id: 'blumenwiese', name: 'Blumenwiese', short: 'Blumenwiese', desc: 'Locker verstreute Blumen in vielen Farben.' },
-  { id: 'wald', name: 'Wald', short: 'Wald', desc: 'Pilze, Farne und Moos unter Bäumen.' },
+  { id: 'pflanzenhandlung', name: 'Pflanzenhandlung', label: 'Pflanzen\u00adhandlung', short: 'Pflanzenhandlung', desc: 'Zimmerpflanzen in Töpfen, Regale und Hängeampeln.' },
+  { id: 'gewaechshaus', name: 'Gewächshaus', label: 'Gewächs\u00adhaus', short: 'Gewächshaus', desc: 'Gemüse und Kräuter in Beeten.' },
+  { id: 'blumenwiese', name: 'Blumenwiese', label: 'Blumen\u00adwiese', short: 'Blumenwiese', desc: 'Locker verstreute Blumen in vielen Farben.' },
+  { id: 'wald', name: 'Wald', label: 'Wald', short: 'Wald', desc: 'Pilze, Farne und Moos unter Bäumen.' },
 ];
 
 const RAW = [
@@ -93,9 +93,34 @@ const RAW = [
   ['buschwindroeschen', 'Buschwindröschen', 'wald', 'flower', ['weiss', 'rosa']],
 ];
 
+// Trennstellen (|) für die Anzeige langer Namen in schmalen Kacheln (v0.5.3). Bevorzugt an
+// Wortfugen, damit es „Zunder-schwamm“ heißt und nicht „Zunderschwa-mm“. Daraus wird label:
+// derselbe Name mit weichen Trennstrichen (U+00AD) – nur für die Anzeige, name bleibt sauber
+// (Toasts, Dialogtexte, aria-label). CSS: hyphens: manual (.pname), so trennt iOS genau hier.
+export const BREAKS = [
+  'Mon|stera', 'Alo|casia', 'Cala|thea', 'orbi|folia', 'lanci|folia', 'Suk|ku|lente', 'Stre|litzie',
+  'Venus|fliegen|falle', 'Orchi|dee', 'Efeu|tute', 'Gummi|baum', 'Bogen|hanf', 'Anthu|rie',
+  'Philo|den|dron', 'Prin|cess', 'Dra|gon', 'Vel|vet',
+  'Ba|si|likum', 'Me|lone', 'Erd|beere', 'Pa|prika', 'Auber|gine', 'Zuc|chini', 'Ka|rotte',
+  'Radies|chen', 'Ros|marin',
+  'Gänse|blümchen', 'Korn|blume', 'La|vendel', 'Sonnen|blume', 'Edel|nelke', 'Ger|mini',
+  'Vergiss|mein|nicht', 'Finger|hut', 'Mohn|feld', 'Puste|blume', 'Ringel|blume', 'Glocken|blume',
+  'Duft|wicke', 'Schwert|lilie',
+  'Fliegen|pilz', 'Stein|pilz', 'Pfiffer|ling', 'Butter|pilz', 'Heidel|beer|strauch', 'Moos|polster',
+  'Glüh|pilzen', 'Mai|glöckchen', 'Hexen|ring', 'Wald|erd|beere', 'Bär|lauch', 'Zunder|schwamm',
+  'Tannen|setz|ling', 'Wald|meister', 'Para|sol|pilz', 'Preisel|beere', 'Busch|wind|röschen',
+];
+const BREAK_BY_WORD = Object.fromEntries(BREAKS.map((b) => [b.replaceAll('|', ''), b.replaceAll('|', '\u00ad')]));
+
+/** Anzeigename mit weichen Trennstellen (U+00AD) an den Wortfugen. */
+export function hyphenate(name) {
+  return name.split(' ').map((w) => BREAK_BY_WORD[w] || w).join(' ');
+}
+
 export const PLANTS = RAW.map(([id, name, region, kind, variants]) => ({
   id,
   name,
+  label: hyphenate(name),
   region,
   kind,
   variants,
