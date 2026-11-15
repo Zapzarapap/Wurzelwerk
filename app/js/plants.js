@@ -21,7 +21,7 @@ const RAW = [
   ['alocasia_mask', 'Mask Alocasia', 'pflanzenhandlung', 'leaf', []],
   ['calathea_orbifolia', 'Calathea orbifolia', 'pflanzenhandlung', 'leaf', []],
   ['calathea_lancifolia', 'Calathea lancifolia', 'pflanzenhandlung', 'leaf', []],
-  ['kaktus', 'Kaktus', 'pflanzenhandlung', 'cactus', []],
+  ['kaktus', 'Kaktus', 'pflanzenhandlung', 'cactus', ['rosa', 'gelb']],
   ['sukkulente', 'Sukkulente', 'pflanzenhandlung', 'succulent', []],
   ['pilea', 'Pilea', 'pflanzenhandlung', 'leaf', []],
   ['strelitzie', 'Strelitzie', 'pflanzenhandlung', 'leaf', ['orange', 'gelb']],
@@ -38,8 +38,8 @@ const RAW = [
   ['gurke', 'Gurke', 'gewaechshaus', 'veg', []],
   ['basilikum', 'Basilikum', 'gewaechshaus', 'leaf', []],
   ['melone', 'Melone', 'gewaechshaus', 'veg', []],
-  ['kuerbis', 'Kürbis', 'gewaechshaus', 'veg', []],
-  ['chili', 'Chili', 'gewaechshaus', 'veg', ['rot', 'gelb', 'orange']],
+  ['kuerbis', 'Kürbis', 'gewaechshaus', 'veg', ['orange', 'gruen', 'beige']],
+  ['chili', 'Chili', 'gewaechshaus', 'veg', ['rot', 'gelb', 'orange', 'gruen']],
   ['erdbeere', 'Erdbeere', 'gewaechshaus', 'berry', ['weiss', 'rosa']],
   ['paprika', 'Paprika', 'gewaechshaus', 'veg', ['rot', 'gelb', 'orange', 'gruen']],
   ['aubergine', 'Aubergine', 'gewaechshaus', 'veg', []],
@@ -57,8 +57,8 @@ const RAW = [
   ['lavendel', 'Lavendel', 'blumenwiese', 'flower', ['lila', 'rosa', 'weiss']],
   ['lilie', 'Lilie', 'blumenwiese', 'flower', ['weiss', 'rosa', 'orange', 'gelb', 'rot']],
   ['sonnenblume', 'Sonnenblume', 'blumenwiese', 'flower', ['gelb', 'rotbraun']],
-  ['edelnelke', 'Edelnelke', 'blumenwiese', 'flower', ['rot', 'rosa', 'weiss']],
-  ['rose', 'Rose', 'blumenwiese', 'flower', ['rot', 'rosa', 'weiss', 'gelb']],
+  ['edelnelke', 'Edelnelke', 'blumenwiese', 'flower', ['rot', 'rosa', 'weiss', 'gelb']],
+  ['rose', 'Rose', 'blumenwiese', 'flower', ['rot', 'rosa', 'weiss', 'gelb', 'orange']],
   ['germini', 'Germini', 'blumenwiese', 'flower', ['rot', 'orange', 'rosa', 'gelb', 'weiss']],
   ['tulpe', 'Tulpe', 'blumenwiese', 'flower', ['rot', 'gelb', 'rosa', 'weiss', 'orange', 'lila']],
   ['vergissmeinnicht', 'Vergissmeinnicht', 'blumenwiese', 'flower', ['blau', 'rosa', 'weiss']],
@@ -109,5 +109,5 @@ export function plantsOfRegion(regionId) {
 
 export const VARIANT_LABELS = {
   rot: 'Rot', orange: 'Orange', rosa: 'Rosa', weiss: 'Weiß', gelb: 'Gelb',
-  blau: 'Blau', lila: 'Lila', rotbraun: 'Rotbraun', gruen: 'Grün', hellblau: 'Hellblau',
+  blau: 'Blau', lila: 'Lila', rotbraun: 'Rotbraun', gruen: 'Grün', hellblau: 'Hellblau', beige: 'Beige',
 };
