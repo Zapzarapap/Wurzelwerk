@@ -550,7 +550,11 @@ span.mini-title { display: inline-flex; align-items: center; justify-content: ce
   white-space: nowrap;
   min-width: 0;
 }
+.light-chip { max-width: 100%; }
 .light-chip .muted { font-weight: 600; }
+.light-chip .light-phase { flex-shrink: 0; }
+.light-chip .light-times { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (max-width: 340px) { .light-chip .light-times { display: none; } }
 .count-chip { color: var(--muted); }
 .garden-empty {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -676,6 +680,8 @@ span.mini-title { display: inline-flex; align-items: center; justify-content: ce
 #toasts { position: fixed; left: 0; right: 0; top: calc(var(--safe-top) + 10px); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 60; pointer-events: none; }
 .toast { background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 10px; font-weight: 700; font-size: 14px; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25); animation: drop 0.2s ease-out; transition: opacity 0.3s, transform 0.3s; }
 .toast.out { opacity: 0; transform: translateY(-8px); }
+.toast.action { pointer-events: auto; border: 0; display: inline-flex; gap: 12px; align-items: center; min-height: 44px; font-family: inherit; cursor: pointer; }
+.toast.action strong { text-decoration: underline; text-underline-offset: 3px; }
 
 @keyframes up { from { transform: translateY(24px); opacity: 0; } }
 @keyframes down { to { transform: translateY(40px); opacity: 0; } }

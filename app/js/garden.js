@@ -19,19 +19,36 @@ import { SCENES } from './scenes/index.js';
 import { getSprite, NOFOOT_ANCHOR } from './sprites.js';
 import { makeCanvas } from './pixelart.js';
 
+// Hintergründe (LRU): Schlüssel wie bisher, aber begrenzt über die Pixelzahl
+// (Hintergrund + Leucht-Ebene), statt bei > 6 Einträgen alles zu verwerfen.
+// Große Szenen belegen ~8 MB pro Ebene – auf dem iPhone ist Canvas-Speicher knapp.
+// Der Wald cacht seinen Boden zusätzlich kachelweise (neue Abschnitte/Filter/Resize
+// berechnen nur neue Kacheln).
 const bgCache = new Map();
+const BG_BUDGET = 9e6; // Pixel
+const bgPixels = (bg) => (bg.canvas?.width || 0) * (bg.canvas?.height || 0) * (bg.glow ? 2 : 1);
 
 function background(mod, scene) {
   const key = `${mod.id}|${scene.W}x${scene.H}|${scene.sections.length}|${scene.ox},${scene.oy}`;
-  if (!bgCache.has(key)) {
-    if (bgCache.size > 6) bgCache.clear();
-    const bg = mod.paint(scene);
-    bg.halos ||= [];
-    bg.beams ||= [];
-    bg.fx = { fireflies: [], critters: [], ...(bg.fx || {}) };
+  let bg = bgCache.get(key);
+  if (bg) {
+    bgCache.delete(key); // nach hinten = zuletzt benutzt
     bgCache.set(key, bg);
+    return bg;
   }
-  return bgCache.get(key);
+  bg = mod.paint(scene);
+  bg.halos ||= [];
+  bg.beams ||= [];
+  bg.fx = { fireflies: [], critters: [], ...(bg.fx || {}) };
+  let total = bgPixels(bg);
+  for (const v of bgCache.values()) total += bgPixels(v);
+  for (const [k, v] of bgCache) {
+    if (total <= BG_BUDGET) break;
+    total -= bgPixels(v);
+    bgCache.delete(k);
+  }
+  bgCache.set(key, bg);
+  return bg;
 }
 
 /** Sprite eines Teils: gemeinsames Requisit (piece.prop) oder vom Regionsmodul. */
@@ -351,7 +368,9 @@ export class GardenRenderer {
   _tap(p) {
     if (!this.scene) return;
     const wx = (p.x - this.cam.ox) / this.cam.s, wy = (p.y - this.cam.oy) / this.cam.s;
-    const hit = hitTest(this.scene.items, wx, wy);
+    // Fingertoleranz ≈ 6 CSS-px, in Welt-Pixeln (1…6)
+    const tol = Math.max(1, Math.min(6, Math.round((6 * this.dpr) / this.cam.s)));
+    const hit = hitTest(this.scene.items, wx, wy, { tol });
     this.selected = hit;
     this.render();
     this.onTap?.(hit);

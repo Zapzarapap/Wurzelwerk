@@ -83,6 +83,7 @@ async function checkTimer() {
 }
 
 async function boot() {
+  if (await registerSW()) return; // lädt gerade mit neuer Version neu
   buildTabbar();
   try {
     await store.init();
@@ -102,16 +103,79 @@ async function boot() {
   setInterval(checkTimer, 5000);
   checkTimer();
 
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('./sw.js').then((reg) => {
-      reg.addEventListener('updatefound', () => {
-        const w = reg.installing;
-        w?.addEventListener('statechange', () => {
-          if (w.state === 'installed' && navigator.serviceWorker.controller) toast('Update geladen – beim nächsten Start aktiv.');
-        });
-      });
-    }).catch(() => {});
+}
+
+// --- Updates (Service Worker, siehe sw.js) -----------------------------------
+let reloading = false;
+let wantReload = false; // nur neu laden, wenn der Wechsel angefordert wurde (Start oder „Neu laden“)
+function activateUpdate(w) {
+  if (!w) return;
+  wantReload = true;
+  try { sessionStorage.setItem('ww-update-at', String(Date.now())); } catch { /* egal */ }
+  w.postMessage({ type: 'SKIP_WAITING' });
+}
+
+function offerUpdate(w) {
+  toast('Neue Version verfügbar', Infinity, { id: 'update', action: { label: 'Neu laden', onClick: () => activateUpdate(w) } });
+}
+
+function watchUpdates(reg) {
+  const track = (w) => w?.addEventListener('statechange', () => {
+    if (w.state === 'installed' && navigator.serviceWorker.controller) offerUpdate(w);
+  });
+  if (reg.waiting && navigator.serviceWorker.controller) offerUpdate(reg.waiting);
+  track(reg.installing);
+  reg.addEventListener('updatefound', () => track(reg.installing));
+  // iOS hält die App lange im Speicher: beim Zurückkehren nach Updates sehen (höchstens alle 10 min)
+  let last = Date.now();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || Date.now() - last < 600000) return;
+    last = Date.now();
+    reg.update().catch(() => {});
+  });
+}
+
+/**
+ * Service Worker registrieren. Wartet beim Start schon eine neue Version, wird sie
+ * gleich aktiviert und die Seite neu geladen (Kaltstart, noch nichts angezeigt) –
+ * so läuft schon der erste Neustart nach einem Update mit der neuen Version.
+ * → true, wenn neu geladen wird (dann nicht weiter starten).
+ */
+async function registerSW() {
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return;
+    if (!wantReload) {
+      // z. B. in einem anderen Fenster aktiviert: nicht ungefragt neu laden
+      toast('Neue Version aktiv', Infinity, { id: 'update', action: { label: 'Neu laden', onClick: () => location.reload() } });
+      return;
+    }
+    reloading = true;
+    location.reload();
+  });
+  if (!navigator.serviceWorker.controller) {
+    // Erster Besuch (bzw. ohne aktiven SW): nicht auf die Registrierung warten
+    navigator.serviceWorker.register('./sw.js').then(watchUpdates).catch(() => {});
+    return false;
   }
+  let reg;
+  try { reg = await navigator.serviceWorker.register('./sw.js'); } catch { return false; }
+  let recent = 0;
+  try { recent = Date.now() - Number(sessionStorage.getItem('ww-update-at') || 0); } catch { /* egal */ }
+  if (reg.waiting && navigator.serviceWorker.controller && recent > 15000) {
+    // Nachricht wiederholen, bis der SW übernimmt (sie kann beim Kaltstart verloren gehen);
+    // reagiert er nicht, nach 2,5 s normal weiter starten.
+    const w = reg.waiting;
+    const switched = await new Promise((res) => {
+      const iv = setInterval(() => (reg.waiting === w ? w.postMessage({ type: 'SKIP_WAITING' }) : null), 400);
+      const t = setTimeout(() => { clearInterval(iv); wantReload = false; res(false); }, 2500);
+      navigator.serviceWorker.addEventListener('controllerchange', () => { clearInterval(iv); clearTimeout(t); res(true); }, { once: true });
+      activateUpdate(w);
+    });
+    if (switched) return true;
+  }
+  watchUpdates(reg);
+  return false;
 }
 
 boot();

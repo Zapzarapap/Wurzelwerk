@@ -11,6 +11,7 @@ Im Kern geht es um **Statistiken**, das Pflanzenspiel läuft nebenbei.
 - **Backup:** Unter „Mehr“ (Einstellungen) gibt es „Backup exportieren“ (JSON über die Web Share API → Dateien/iCloud/AirDrop) und „Backup importieren“. Eine laufende Session wird weder exportiert noch importiert. Der Import prüft die Datei gründlich und meldet Fehler auf Deutsch.
 - Die App erinnert an Backups („Letztes Backup vor X Tagen“): ab 7 Tagen (bzw. wenn es Sessions, aber noch kein Backup gibt) mit einem Punkt am „Mehr“-Tab und einem dezenten Hinweis auf der Lernen-Seite.
 - Hosting: GitHub Pages.
+- **Updates (ab v0.5.2):** Der Service Worker lädt eine neue Version im Hintergrund komplett in den Cache und wartet. Die App zeigt dann „Neue Version verfügbar – Neu laden“; Antippen aktiviert sie und lädt neu. Wartet beim Start schon eine neue Version, wird sie gleich aktiviert (kurzer Neustart, bevor etwas angezeigt wird). Alle Daten – auch eine laufende Session – liegen in IndexedDB, es geht nichts verloren. Ungefragt lädt die App nie neu. (Von v0.5.1 aus greift das erst ab dem übernächsten Start, weil die alte Version den Hinweis noch nicht kennt.)
 - Timer laufen über Zeitstempel (Start merken, beim Öffnen die Differenz berechnen), damit die Zeit auch bei gesperrtem Handy stimmt.
 
 ## Sessions
@@ -45,7 +46,8 @@ Beim Start einer Session wählt man:
 
 Navigation: **Lernen · Statistik · Orte · Shop · Mehr**.
 
-- Ansicht pro Region (Reiter mit kleinem Pflanzen-Marker), filterbar nach Zeitraum (Tag / Woche / Monat / Jahr, ggf. Gesamt) und nach Tag.
+- Ansicht pro Region (Reiter mit kleinem Pflanzen-Marker), filterbar nach Zeitraum (Tag / Woche / Monat / Jahr, Gesamt) und nach Tag.
+- **Plätze und Filter:** Die Stellplätze gelten für die Ansicht **„Gesamt“** (alle Tags): Dort steht jede Pflanze dauerhaft auf ihrem Platz, neue Pflanzen ändern daran nichts. Eine **Filteransicht** (Zeitraum oder Tag) zeigt nur die gefilterten Pflanzen und verteilt *diese* für sich auf eine passend kleine Fläche – dort kann eine Pflanze also woanders stehen als in „Gesamt“. Gewollt so: Ein gefilterter Tag/Monat soll kompakt aussehen statt als großer, fast leerer Ort.
 - Die Region **wächst mit der Anzahl der Pflanzen** in Abschnitten (Zimmer, Beete, Wiesenstücke, Lichtungen). Die Kamera zoomt automatisch passend, Pinch-Zoom für Details. Die Fläche wird auf Bildschirmgröße erweitert (leere Abschnitte bzw. Umgebung), damit kein ungenutzter Rand bleibt; die Stellplätze der Pflanzen ändern sich dadurch nicht. Zoom-Buttons und Licht-/Anzahl-Anzeige sitzen in einer Leiste unter der Fläche und verdecken nichts.
 - **Szenen-System** (ab v0.5, Details: `docs/SZENEN.md`): Jede Region ist ein eigenes Modul `app/js/scenes/<region>.js` mit organischen Stellplätzen auf verschiedenen Höhen (Regal, Fensterbank, Hängeampel, Bodengruppe, Beet, Lichtung …). Jede Pflanze bekommt einen zufälligen freien Stellplatz (Zufall aus der Pflanzen-ID); erst wenn alle belegt sind, kommt ein neuer Abschnitt dazu. **Pflanzen ziehen nie um.** Deko füllt freie Plätze und macht Pflanzen Platz.
 - **Pflanzenhandlung:** ein Haus im Querschnitt (Puppenhaus): Laden mit Schaufenster, Regal, Hängeampel und Theke; danach wachsen Leseecke, Werkstatt mit Pflanztisch, Wintergarten und Treppenhaus als Etagen und Anbauten dazu, mit Dächern, Gehweg und Laterne. **Gewächshaus:** Erdbeete mit Holzrand. **Blumenwiese/Wald:** locker gestreut in Wiesen- bzw. Waldstücken.
@@ -133,7 +135,7 @@ Pilze in Gruppen unter Bäumen, Lichtungen.
 - Bärlauch
 - Zunderschwamm
 
-**Summe:** 52 Arten (14 + 11 + 14 + 13) × 5 Stufen = 260 Sprites (+ Farbvarianten per Palettentausch) + Boden-/Deko-Kacheln.
+**Summe:** 52 Grundarten (14 + 11 + 14 + 13), mit den Bonus-Arten (unten) 72 Arten (19 + 16 + 19 + 18) × 5 Stufen = 360 Sprites (+ 109 Farbvarianten bei 33 Arten per Palettentausch) + Boden-/Deko-Kacheln.
 
 ## Noch offen
 

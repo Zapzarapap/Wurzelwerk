@@ -1,7 +1,9 @@
-// Pflanzenkatalog – alle 72 Arten aus docs/KONZEPT.md.
-// variants: natürliche Farben (Fallback). Vorhandene Sprite-Dateien
-// (app/data/sprites.json) haben Vorrang, siehe sprites.js.
-// kind: grobe Form für den Platzhalter, solange kein Sprite existiert.
+// Pflanzenkatalog – 72 Arten aus docs/KONZEPT.md: 52 Grundarten + 20 Bonus-Arten
+// (v0.5.1, je 5 pro Region) → Pflanzenhandlung 19, Gewächshaus 16, Blumenwiese 19, Wald 18.
+// variants: natürliche Farben, 109 Farbvarianten bei 33 Arten (die übrigen haben keine).
+// Sie stimmen mit app/data/sprites.json überein (Test in app/tests); bei Abweichung hätte
+// das Manifest Vorrang (sprites.js). Gezeichnet sind inzwischen alle Arten in allen Stufen.
+// kind: grobe Form für den Platzhalter (nur falls ein Sprite fehlt oder nicht lädt).
 
 import { CONFIG } from './config.js';
 

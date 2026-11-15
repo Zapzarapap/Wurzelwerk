@@ -84,6 +84,10 @@ Die Engine ergänzt `key` (`"<abschnitt>.<n>"`, stabil), `section`, Welt-`x/y/z`
 2. **Tippen:** Der Punkt `(x, y-2)` jedes Spots muss beim Tippen *genau diese* Pflanze treffen,
    auch wenn alle Spots belegt sind (vorderste = größtes z gewinnt). Faustregel: Spots, deren
    Tipp-Flächen sich überlappen könnten, brauchen `|dx| > 16` oder `|dy| > 21`.
+   Ab v0.5.2 trifft man im Browser zuerst über die **Sprite-Silhouette** (Alpha-Maske je
+   Art/Stufe/Variante aus `sprites.js`, `engine.spriteDist`): ein sichtbares Pixel wählt die
+   dort vorderste Pflanze, knapp daneben (Fingertoleranz ≈ 6 CSS-px) die nächste. Die
+   Fuß-Tipp-Fläche (`hit`/`HIT`) bleibt der Rückfall (und gilt in den Tests ohne Sprites).
 3. Fußpunkte mindestens 10 px auseinander.
 4. Sprites dürfen sich gern überlappen (Blätter vor Blättern = Gruppe) – die Tipp-Regel reicht.
 
@@ -144,7 +148,10 @@ return {
 ```
 
 Gecacht pro Region + Größe + Abschnittszahl + Versatz – darf also **nicht von den Pflanzen
-abhängen** (Belegung → `pieces`).
+abhängen** (Belegung → `pieces`). Der Cache in `garden.js` ist ein LRU mit Pixel-Budget.
+Teure pixelweise Böden **kachelweise in Inhaltskoordinaten cachen** (Vorbild: `floorTile` in
+`wald.js`) und Formen (Ellipsen, Flecken) pro Kachel vorfiltern statt pro Pixel über alle zu
+laufen – dann kosten neue Abschnitte, Filterwechsel und Resize nur die neuen Kacheln.
 
 `Buf`: `set(x,y,rgb,a)`, `rect`, `hline`, `vline`, `ellipse`, `line`, `noisy`, `clear` (Loch für Himmel),
 `glow(x,y,rgb)` (leuchtet nachts), `art(pixelArtOderSprite, x, y)` (wird nach den Pixeln gezeichnet), `finish()`.

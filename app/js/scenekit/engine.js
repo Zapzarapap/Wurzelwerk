@@ -20,14 +20,44 @@ export function hitBox(it) {
   return { x0: it.x - h.dx, x1: it.x + h.dx, y0: it.y - h.up, y1: it.y + (h.down ?? 1) };
 }
 
-/** Vorderste Pflanze (größtes z) unter dem Punkt. */
-export function hitTest(items, wx, wy) {
-  let hit = null;
+/**
+ * Abstand (Welt-Pixel, Chebyshev) vom Punkt zum nächsten deckenden Sprite-Pixel der
+ * Pflanze, 0 = Treffer auf der Silhouette, Infinity = weiter weg als tol bzw. keine Maske.
+ * Maske (aus sprites.js, je Art/Stufe/Variante): { a: Uint8Array(w·h) 0/1, w, h, ay, box }
+ * – das Sprite liegt bei (x − w/2, y − ay), gespiegelt um die Mitte, wenn it.flip.
+ */
+export function spriteDist(it, wx, wy, tol = 0) {
+  const m = it.sprite?.mask;
+  if (!m) return Infinity;
+  let px = Math.floor(wx) - (it.x - (m.w >> 1));
+  const py = Math.floor(wy) - (it.y - m.ay);
+  if (it.flip) px = m.w - 1 - px;
+  const b = m.box;
+  if (!b || px < b.x0 - tol || px > b.x1 + tol || py < b.y0 - tol || py > b.y1 + tol) return Infinity;
+  const at = (x, y) => x >= 0 && y >= 0 && x < m.w && y < m.h && m.a[y * m.w + x] === 1;
+  if (at(px, py)) return 0;
+  for (let d = 1; d <= tol; d++)
+    for (let k = -d; k <= d; k++)
+      if (at(px + k, py - d) || at(px + k, py + d) || at(px - d, py + k) || at(px + d, py + k)) return d;
+  return Infinity;
+}
+
+/**
+ * Pflanze unter dem Punkt. Reihenfolge:
+ *  1. sichtbare Silhouette (Sprite-Maske) – die vorderste (größtes z) gewinnt,
+ *  2. nächstes Sprite-Pixel innerhalb tol (Fingertoleranz in Welt-Pixeln),
+ *  3. Tipp-Fläche um den Fußpunkt (hitBox; auch ohne geladene Sprites, z. B. in Tests).
+ */
+export function hitTest(items, wx, wy, { tol = 0 } = {}) {
+  let exact = null, near = null, nearD = Infinity, box = null;
   for (const it of items) {
+    const d = spriteDist(it, wx, wy, tol);
+    if (d === 0) { if (!exact || it.z >= exact.z) exact = it; continue; }
+    if (d < nearD || (d === nearD && near && it.z >= near.z)) { near = it; nearD = d; }
     const b = hitBox(it);
-    if (wx >= b.x0 && wx <= b.x1 && wy >= b.y0 && wy <= b.y1 && (!hit || it.z >= hit.z)) hit = it;
+    if (wx >= b.x0 && wx <= b.x1 && wy >= b.y0 && wy <= b.y1 && (!box || it.z >= box.z)) box = it;
   }
-  return hit;
+  return exact || near || box;
 }
 
 /** Ungefähre Sprite-Fläche einer Pflanze (für Deko, die ausweichen soll). */

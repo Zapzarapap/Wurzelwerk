@@ -84,12 +84,46 @@ export function confirmDialog({ title, text, ok = 'OK', cancel = 'Abbrechen', da
   });
 }
 
-export function toast(text, ms = 2600) {
+/**
+ * Kurzer Hinweis oben. Toasts stapeln sich nicht: Ein Toast mit derselben id
+ * ersetzt den vorherigen (Text + Zeit neu), und es sind höchstens 2 gleichzeitig
+ * zu sehen (der älteste geht). opts.onDone: wenn der Toast verschwindet.
+ * opts.action: { label, onClick } – antippbarer Toast (z. B. „Neu laden“).
+ */
+const liveToasts = new Map(); // id → { el, timers }
+let toastSeq = 0;
+export function toast(text, ms = 2600, opts = {}) {
   const root = document.getElementById('toasts');
-  const t = h('div', { class: 'toast' }, text);
+  if (!root) return null;
+  const id = opts.id || `t${++toastSeq}`;
+  const old = liveToasts.get(id);
+  if (old) { old.timers.forEach(clearTimeout); old.el.remove(); liveToasts.delete(id); }
+  // höchstens 2 kurze Toasts gleichzeitig (dauerhafte wie „Neu laden“ bleiben stehen)
+  for (;;) {
+    const short = [...liveToasts].filter(([, v]) => !v.sticky);
+    if (short.length < 2) break;
+    const [k, v] = short[0];
+    v.timers.forEach(clearTimeout); v.el.remove(); liveToasts.delete(k); v.onDone?.();
+  }
+  const t = opts.action
+    ? h('button', { class: 'toast action', onclick: () => opts.action.onClick() }, h('span', {}, text), h('strong', {}, opts.action.label))
+    : h('div', { class: 'toast' }, text);
   root.append(t);
-  setTimeout(() => t.classList.add('out'), ms);
-  setTimeout(() => t.remove(), ms + 400);
+  const entry = { el: t, onDone: opts.onDone, timers: [], sticky: ms === Infinity };
+  if (ms !== Infinity) {
+    entry.timers.push(setTimeout(() => t.classList.add('out'), ms));
+    entry.timers.push(setTimeout(() => {
+      t.remove();
+      if (liveToasts.get(id) === entry) { liveToasts.delete(id); entry.onDone?.(); }
+    }, ms + 400));
+  }
+  liveToasts.set(id, entry);
+  return t;
+}
+
+/** Namen deutsch aufzählen: „A“, „A und B“, „A, B und C“. */
+export function joinNames(names) {
+  return names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} und ${names[names.length - 1]}`;
 }
 
 // --- Pixel-Icons (SVG, crisp) ----------------------------------------------
@@ -235,6 +269,20 @@ const ICONS = {
     '..r......r..',
     '.r...rr...r.',
     '.....rr.....',
+  ],
+  horizon: [ // Sonne am Horizont (Morgenrot / Abendrot)
+    '............',
+    '.....rr.....',
+    '.r...rr...r.',
+    '..r......r..',
+    '............',
+    '....dddd....',
+    '...dYyyyd...',
+    'rr.dYyyyd.rr',
+    '..dyyyyyyd..',
+    '############',
+    '............',
+    '...######...',
   ],
   moon: [
     '............',

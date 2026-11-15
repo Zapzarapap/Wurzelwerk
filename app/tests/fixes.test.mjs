@@ -47,7 +47,7 @@ const good = () => ({
   data: {
     tags: [{ id: 't1', name: 'Uni' }],
     sessions: [{ id: 's1', segments: [[1, 2]] }],
-    plants: [{ id: 'p1' }],
+    plants: [{ id: 'p1', species: 'monstera', region: 'pflanzenhandlung', stage: 3, variant: null, createdAt: 1, minutes: 60 }],
     kv: [{ key: 'purchases', value: [] }, { key: 'active', value: { x: 1 } }, { key: 'lastBackupAt', value: 5 }],
   },
 });
@@ -58,7 +58,7 @@ test('Import prüft id/key und meldet Fehler auf Deutsch', () => {
     [(d) => { d.data.tags[0] = { name: 'x' }; }, /Tags.*Kennung/],
     [(d) => { d.data.plants.push({ species: 'monstera' }); }, /Pflanzen.*Kennung/],
     [(d) => { d.data.kv.push({ value: 1 }); }, /Einstellungen.*Kennung/],
-    [(d) => { d.data.plants.push({ id: 'p1' }); }, /doppelt/],
+    [(d) => { d.data.plants.push({ ...d.data.plants[0] }); }, /doppelt/],
     [(d) => { d.data.sessions[0].segments = [[5, 'x']]; }, /ungültige Zeiten/],
     [(d) => { delete d.data.kv; }, /unvollständig/],
     [(d) => { d.app = 'x'; }, /keine Wurzelwerk-Backup-Datei/],

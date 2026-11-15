@@ -9,6 +9,13 @@ import { periodRange, shiftAnchor } from '../stats.js';
 import { periodLabel, fmtDuration, fmtDate, fmtTime } from '../format.js';
 import { currentLight, todaySun } from '../clock.js';
 
+/** Kurzer Name + Symbol der Lichtphase für den Chip (passt auch bei 320–390 px). */
+export function lightView(L) {
+  const label = { Morgendämmerung: 'Morgenrot' }[L.phase] || L.phase;
+  const icon = L.phase === 'Tag' ? 'sun' : (L.phase === 'Morgendämmerung' || L.phase === 'Abendrot') ? 'horizon' : 'moon';
+  return { label, icon };
+}
+
 const PERIODS = [['day', 'Tag'], ['week', 'Woche'], ['month', 'Monat'], ['year', 'Jahr'], ['all', 'Gesamt']];
 const state = { region: null, kind: 'all', anchor: new Date(), tag: '' };
 
@@ -101,8 +108,12 @@ export function mount(root, { navigate, params }) {
     const L = currentLight();
     const sun = todaySun();
     clear(lightChip);
-    lightChip.append(icon(L.glow > 0.5 ? 'moon' : 'sun', 12), h('span', {}, L.phase),
-      h('span', { class: 'muted' }, sun.sunrise ? ` · ${fmtTime(sun.sunrise)}–${fmtTime(sun.sunset)}` : ''));
+    const v = lightView(L);
+    lightChip.append(icon(v.icon, 12), h('span', { class: 'light-phase' }, v.label),
+      sun.sunrise ? h('span', { class: 'muted light-times' }, `· ${fmtTime(sun.sunrise)}–${fmtTime(sun.sunset)}`) : null);
+    const full = sun.sunrise ? `${L.phase}, Sonnenaufgang ${fmtTime(sun.sunrise)}, Sonnenuntergang ${fmtTime(sun.sunset)}` : L.phase;
+    lightChip.setAttribute('title', full);
+    lightChip.setAttribute('aria-label', full);
     lightChip.classList.toggle('night', L.glow > 0.5);
     return L;
   }

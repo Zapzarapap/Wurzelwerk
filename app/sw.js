@@ -1,7 +1,15 @@
 // Service Worker: App-Shell cache-first aus versioniertem Cache, Sprites
 // cache-first, sprites.json network-first. Bei Releases VERSION erhöhen
 // (muss zu js/version.js passen – wird in app/tests geprüft).
-const VERSION = '0.5.1';
+//
+// Update-Fluss (ab 0.5.2): Ein neuer SW lädt seinen Cache vollständig und wartet.
+// Die Seite zeigt „Neue Version verfügbar – Neu laden“; Antippen schickt
+// {type: 'SKIP_WAITING'} → aktivieren → die Seite lädt neu (controllerchange).
+// Beim nächsten Kaltstart aktiviert main.js einen wartenden SW automatisch.
+// Alle Daten liegen in IndexedDB (auch eine laufende Session) → kein Datenverlust.
+// Ausnahme: Läuft noch eine Version vor 0.5.2 (kennt die Nachricht nicht),
+// aktiviert sich der neue SW wie früher sofort.
+const VERSION = '0.5.2';
 const CACHE = 'wurzelwerk-' + VERSION;
 
 const SHELL = [
@@ -78,8 +86,20 @@ self.addEventListener('install', (event) => {
         for (const f of s.files) urls.push(`../art/sprites/${s.region}/${species}/${f}.png`);
       await Promise.allSettled(urls.map((u) => cache.add(u)));
     } catch { /* egal */ }
-    await self.skipWaiting();
+    if (await legacyActive()) await self.skipWaiting();
   })());
+});
+
+/** Läuft gerade eine App-Version ohne SKIP_WAITING-Nachricht (≤ 0.5.1)? */
+async function legacyActive() {
+  const older = (await caches.keys())
+    .filter((k) => k.startsWith('wurzelwerk-') && k !== CACHE)
+    .map((k) => k.slice('wurzelwerk-'.length).split('.').map(Number));
+  return older.some(([a = 0, b = 0, c = 0]) => a * 1e6 + b * 1e3 + c < 5002);
+}
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {

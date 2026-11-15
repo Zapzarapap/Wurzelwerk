@@ -1,5 +1,5 @@
 // Shop: Regionen und Pflanzen mit Tokens freischalten.
-import { h, clear, icon, spriteEl, confirmDialog, toast, tokenBadge, regionMarker } from '../ui.js';
+import { h, clear, icon, spriteEl, confirmDialog, toast, joinNames, tokenBadge, regionMarker } from '../ui.js';
 import { plural } from '../text.js';
 import * as store from '../store.js';
 import { REGIONS, plantsOfRegion, PLANT_BY_ID } from '../plants.js';
@@ -63,11 +63,15 @@ export function mount(root) {
     if (!ok) return;
     try {
       await store.buy(type, id);
-      toast(`${name} freigeschaltet!`);
+      // Mehrere Käufe hintereinander: ein Toast, der alles zusammenfasst
+      if (!recent.includes(name)) recent.push(name);
+      const shownNames = recent.length > 3 ? [...recent.slice(0, 2), plural(recent.length - 2, 'weitere', 'weitere')] : recent;
+      toast(`${joinNames(shownNames)} freigeschaltet!`, 2600, { id: 'shop', onDone: () => { recent = []; } });
     } catch (e) {
-      toast(e.message);
+      toast(e.message, 2600, { id: 'shop' });
     }
   }
+  let recent = [];
 
   render();
   const off = store.onChange(render);

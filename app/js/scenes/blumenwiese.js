@@ -22,7 +22,7 @@ import { propBox } from '../scenekit/props.js';
 
 // --- Maße --------------------------------------------------------------------
 const SW = 128, SH = 112;
-const PAD = { top: 74, left: 6, right: 6, bottom: 12 };
+const PAD = { top: 74, left: 8, right: 8, bottom: 12 }; // links/rechts ≥ 7: Spots liegen ≥ 9 px vom Rand, Sprites reichen 16 px zur Seite
 const GRID = { cw: SW, ch: SH, aspect: 1.05, start: [2, 1] };
 
 // --- eigene Rampen (outline, shade, base, light, highlight) -------------------

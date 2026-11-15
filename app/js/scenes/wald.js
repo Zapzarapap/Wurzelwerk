@@ -51,6 +51,7 @@ const FLOOR = {
   path: rgbRamp(['#3a2a1e', '#56402e', '#6c5238', '#846646', '#9e7e58']),
   bank: rgbRamp(['#1c1612', '#2c221a', '#3a2e22', '#4a3c2c', '#5c4c38']),
 };
+const WATER_EDGE = mix(R.water[1], R.water[0], 0.4);
 const LEAF_COLS = [C.petal_orange[1], C.bw_russet[2], C.petal_yellow[1], C.petal_orange[2], C.bw_russet[3]];
 
 // --- globale Geometrie (Inhaltskoordinaten) --------------------------------------
@@ -486,42 +487,96 @@ function clearingOf(c, r) {
   return null;
 }
 
-function paintForest(scene) {
-  const { W, H, ox, oy } = scene;
-  const b = new Buf(W, H);
-  const halos = [], beams = [], fireflies = [];
-  const secSet = new Set(scene.sections.map((s) => `${s.c},${s.r}`));
-  const c0 = Math.floor(-ox / CW) - 1, c1 = Math.floor((W - ox) / CW) + 1;
-  const r0 = Math.floor(-oy / CH) - 1, r1 = Math.floor((H - oy) / CH) + 1;
-  const cont = scene.content;
+/** Gitterwerte von vnoise zeilenweise merken (gleiche Formel, nur weniger noise()-Aufrufe). */
+function vrow(s, seed, y) {
+  const fy = y / s, y0 = Math.floor(fy), ty = fy - y0, sy = ty * ty * (3 - 2 * ty);
+  let lx = NaN, a = 0, b = 0, c = 0, d = 0;
+  return (x) => {
+    const fx = x / s, x0 = Math.floor(fx);
+    if (x0 !== lx) { lx = x0; a = noise(x0, y0, seed); b = noise(x0 + 1, y0, seed); c = noise(x0, y0 + 1, seed); d = noise(x0 + 1, y0 + 1, seed); }
+    const tx = fx - x0, sx = tx * tx * (3 - 2 * tx);
+    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+  };
+}
 
-  // Lichtungen und Lichtflecken pro Zelle (Inhaltskoordinaten)
+const FT = 64; // Kachelgröße Boden (Inhaltskoordinaten)
+const floorCache = new Map();
+const toneCache = new Map();
+const tones = (ramp) => {
+  let t = toneCache.get(ramp);
+  if (!t) toneCache.set(ramp, (t = [mix(ramp[2], ramp[1], 0.32), mix(ramp[2], ramp[3], 0.32)]));
+  return t;
+};
+
+/**
+ * Waldboden einer FT×FT-Kachel (Inhaltskoordinaten, RGBA): Moos/Laub, Lichtungen,
+ * Weg, Bach, Sonnenflecken. Lichtungen und Flecken werden pro Zelle in fester
+ * Reihenfolge (Reihe, Spalte) geprüft; erster Treffer gewinnt.
+ */
+function floorTile(tx, ty) {
+  const key = `${tx},${ty}`;
+  let t = floorCache.get(key);
+  if (t) return t;
+  if (floorCache.size > 700) floorCache.clear(); // ≈ 11 MB
+  t = new Uint8ClampedArray(FT * FT * 4);
+  const X0 = tx * FT, Y0 = ty * FT;
+  // Zellen um die Kachel (Ellipsen reichen höchstens in die Nachbarzelle)
   const clear = [], flecks = [];
-  for (let r = r0; r <= r1; r++)
-    for (let c = c0; c <= c1; c++) {
+  for (let r = Math.floor(Y0 / CH) - 1; r <= Math.floor((Y0 + FT - 1) / CH) + 1; r++)
+    for (let c = Math.floor(X0 / CW) - 1; c <= Math.floor((X0 + FT - 1) / CW) + 1; c++) {
       const cl = clearingOf(c, r);
       if (cl) clear.push({ ...cl, x: c * CW + cl.x, y: r * CH + cl.y });
       const rr = rng(`wald:fleck:${c}:${r}`);
       for (let k = 0; k < 5; k++) flecks.push({ x: c * CW + int(rr, 0, CW), y: r * CH + int(rr, 0, CH), rx: 4 + int(rr, 0, 7), ry: 2 + int(rr, 0, 3) });
     }
-
-  // Boden pixelweise
-  for (let y = 0; y < H; y++) {
-    const cy = y - oy;
-    for (let x = 0; x < W; x++) {
-      const cx = x - ox;
-      const m = vnoise(cx, cy, 22, 11) + (vnoise(cx, cy, 7, 12) - 0.5) * 0.35;
+  // Pro 16er-Feld nur die Ellipsen, die es berühren können (Reihenfolge bleibt).
+  // Lichtungsrand: Rauschen ±0.25 → Radius·√1.25.
+  const BIN = 16, NB = FT / BIN;
+  const binOf = (list, grow) => {
+    const bins = Array.from({ length: NB * NB }, () => []);
+    for (const e of list) {
+      const ex = e.rx * grow + 1, ey = e.ry * grow + 1;
+      const bx0 = Math.max(0, Math.floor((e.x - X0 - ex) / BIN)), bx1 = Math.min(NB - 1, Math.floor((e.x - X0 + ex) / BIN));
+      const by0 = Math.max(0, Math.floor((e.y - Y0 - ey) / BIN)), by1 = Math.min(NB - 1, Math.floor((e.y - Y0 + ey) / BIN));
+      for (let by = by0; by <= by1; by++) for (let bx = bx0; bx <= bx1; bx++) bins[by * NB + bx].push(e);
+    }
+    return bins;
+  };
+  const clearBins = binOf(clear, Math.sqrt(1.25)), fleckBins = binOf(flecks, 1);
+  // Weg/Bach-Geometrie pro Spalte bzw. Zeile (gleiche Formeln wie pathDist/stream)
+  const kOf = new Int32Array(FT);
+  for (let lx = 0; lx < FT; lx++) kOf[lx] = streamK(X0 + lx);
+  const kMin = kOf[0], kMax = kOf[FT - 1];
+  const sxOf = new Float64Array(kMax - kMin + 1);
+  const pyOf = new Float64Array(FT);
+  let pyRow = null;
+  for (let ly = 0; ly < FT; ly++) {
+    const cy = Y0 + ly;
+    const brow = (ly >> 4) * NB;
+    const prow = rowOf(cy), onPathRow = hasPath(prow);
+    if (onPathRow && pyRow !== prow) { for (let lx = 0; lx < FT; lx++) pyOf[lx] = pathY(X0 + lx, prow); pyRow = prow; }
+    for (let k = kMin; k <= kMax; k++) sxOf[k - kMin] = streamX(k, cy);
+    const hw = streamHW(cy);
+    const v22 = vrow(22, 11, cy), v7 = vrow(7, 12, cy), v6 = vrow(6, 15, cy);
+    for (let lx = 0; lx < FT; lx++) {
+      const cx = X0 + lx;
+      const bi = brow + (lx >> 4);
+      const m = v22(cx) + (v7(cx) - 0.5) * 0.35;
       const f = noise(cx >> 1, cy >> 1, 13);
       let ramp;
       if (m > 0.5) ramp = FLOOR.moss;
       else if (m < 0.38) ramp = FLOOR.litter;
       else ramp = noise(cx, cy, 14) < (m - 0.38) / 0.12 ? FLOOR.moss : FLOOR.litter;
       // Lichtung: Gras mit weichem Rand
-      for (const cl of clear) {
-        const dd = ((cx - cl.x) / cl.rx) ** 2 + ((cy - cl.y) / cl.ry) ** 2 + (vnoise(cx, cy, 6, 15) - 0.5) * 0.5;
-        if (dd < 1) { ramp = dd < 0.8 || noise(cx, cy, 16) > 0.5 ? FLOOR.grass : ramp; break; }
+      const cls = clearBins[bi];
+      if (cls.length) {
+        const nz = (v6(cx) - 0.5) * 0.5;
+        for (const cl of cls) {
+          const dd = ((cx - cl.x) / cl.rx) ** 2 + ((cy - cl.y) / cl.ry) ** 2 + nz;
+          if (dd < 1) { ramp = dd < 0.8 || noise(cx, cy, 16) > 0.5 ? FLOOR.grass : ramp; break; }
+        }
       }
-      let col = f < 0.2 ? mix(ramp[2], ramp[1], 0.32) : f > 0.84 ? mix(ramp[2], ramp[3], 0.32) : ramp[2];
+      let col = f < 0.2 ? tones(ramp)[0] : f > 0.84 ? tones(ramp)[1] : ramp[2];
       const sp = noise(cx, cy, 17);
       if (ramp !== FLOOR.grass) {
         if (sp > 0.986) col = mix(col, pick(() => noise(cx, cy, 18), LEAF_COLS), 0.55);
@@ -529,7 +584,7 @@ function paintForest(scene) {
       } else if (sp > 0.992) col = mix(col, C.petal_white[3], 0.5);
       else if (sp > 0.975) col = ramp[3];
       // Weg mit Laub
-      const pd = pathDist(cx, cy);
+      const pd = onPathRow ? Math.abs(cy - pyOf[lx]) : Infinity;
       if (pd <= PATH_HW + 1) {
         const edge = pd > PATH_HW - 0.5;
         if (!edge || noise(cx, cy, 19) > 0.45) {
@@ -539,37 +594,71 @@ function paintForest(scene) {
           const lv = noise(cx, cy, 22);
           if (lv > 0.94) col = mix(col, LEAF_COLS[Math.floor(noise(cx, cy, 23) * LEAF_COLS.length)], 0.7);
         }
-        if (pd === PATH_HW + 1 && cy < pathY(cx, rowOf(cy))) col = mix(col, FLOOR.moss[0], 0.25);
+        if (pd === PATH_HW + 1 && cy < pyOf[lx]) col = mix(col, FLOOR.moss[0], 0.25);
       }
       // Bach
-      const s = stream(cx, cy);
-      if (s.d <= s.hw + 2) {
-        if (s.d <= s.hw) {
-          const depth = 1 - s.d / s.hw;
+      const sdx = cx - sxOf[kOf[lx] - kMin], sd = Math.abs(sdx);
+      if (sd <= hw + 2) {
+        if (sd <= hw) {
+          const depth = 1 - sd / hw;
           let wc = depth > 0.55 ? R.water[1] : R.water[2];
-          if (s.d >= s.hw - 0.5) wc = R.water[1];
+          if (sd >= hw - 0.5) wc = R.water[1];
           const ws = noise(cx, cy >> 1, 24), wl = noise(cx >> 1, (cy + Math.round(cx * 0.3)) >> 2, 25);
           if (wl > 0.86 && depth > 0.2) wc = R.water[3];
           if (ws > 0.985) wc = R.water[4];
-          if (s.dx < 0 && s.d > s.hw - 1.5) wc = mix(R.water[1], R.water[0], 0.4); // Schattenkante links oben
+          if (sdx < 0 && sd > hw - 1.5) wc = WATER_EDGE; // Schattenkante links oben
           col = wc;
-        } else col = s.d <= s.hw + 1 ? FLOOR.bank[1] : mix(FLOOR.bank[2], col, 0.4);
+        } else col = sd <= hw + 1 ? FLOOR.bank[1] : mix(FLOOR.bank[2], col, 0.4);
       }
       // Sonnenflecken (tags hell, gegradet nachts dunkel)
-      if (ramp !== FLOOR.grass && s.d > s.hw + 2) {
-        for (const fl of flecks) {
+      if (ramp !== FLOOR.grass && sd > hw + 2) {
+        for (const fl of fleckBins[bi]) {
           const dd = ((cx - fl.x) / fl.rx) ** 2 + ((cy - fl.y) / fl.ry) ** 2;
           if (dd < 1) { col = mix(col, [196, 186, 112], dd < 0.45 ? 0.2 : 0.11); break; }
         }
       }
-      // tiefer Wald außerhalb des Inhalts etwas dunkler
-      if (x < cont.x0 || x >= cont.x1 || y < cont.y0 || y >= cont.y1) {
-        const dd = Math.max(cont.x0 - x, x - cont.x1 + 1, cont.y0 - y, y - cont.y1 + 1);
-        col = mix(col, [14, 20, 16], Math.min(0.32, 0.08 + dd * 0.012));
-      }
-      b.set(x, y, col);
+      const i = (ly * FT + lx) * 4;
+      t[i] = col[0]; t[i + 1] = col[1]; t[i + 2] = col[2]; t[i + 3] = 255;
     }
   }
+  floorCache.set(key, t);
+  return t;
+}
+
+function paintForest(scene) {
+  const { W, H, ox, oy } = scene;
+  const b = new Buf(W, H);
+  const halos = [], beams = [], fireflies = [];
+  const secSet = new Set(scene.sections.map((s) => `${s.c},${s.r}`));
+  const c0 = Math.floor(-ox / CW) - 1, c1 = Math.floor((W - ox) / CW) + 1;
+  const r0 = Math.floor(-oy / CH) - 1, r1 = Math.floor((H - oy) / CH) + 1;
+  const cont = scene.content;
+
+  // Boden: reine Funktion der Inhaltskoordinaten → kachelweise gecacht (floorTile);
+  // bei neuem Abschnitt, Filterwechsel oder Resize werden nur neue Kacheln berechnet.
+  const bd = b.d;
+  const tx0 = Math.floor(-ox / FT), tx1 = Math.floor((W - 1 - ox) / FT);
+  const ty0 = Math.floor(-oy / FT), ty1 = Math.floor((H - 1 - oy) / FT);
+  for (let ty = ty0; ty <= ty1; ty++)
+    for (let tx = tx0; tx <= tx1; tx++) {
+      const t = floorTile(tx, ty);
+      const xa = Math.max(0, tx * FT + ox), xb = Math.min(W, (tx + 1) * FT + ox);
+      const ya = Math.max(0, ty * FT + oy), yb = Math.min(H, (ty + 1) * FT + oy);
+      for (let y = ya; y < yb; y++) {
+        const so = ((y - oy - ty * FT) * FT + (xa - ox - tx * FT)) * 4;
+        bd.set(t.subarray(so, so + (xb - xa) * 4), (y * W + xa) * 4);
+      }
+    }
+  // tiefer Wald außerhalb des Inhalts etwas dunkler
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (x < cont.x0 || x >= cont.x1 || y < cont.y0 || y >= cont.y1) {
+        const dd = Math.max(cont.x0 - x, x - cont.x1 + 1, cont.y0 - y, y - cont.y1 + 1);
+        const i = (y * W + x) * 4;
+        const col = mix([bd[i], bd[i + 1], bd[i + 2]], [14, 20, 16], Math.min(0.32, 0.08 + dd * 0.012));
+        bd[i] = col[0]; bd[i + 1] = col[1]; bd[i + 2] = col[2];
+      } else x = cont.x1 - 1;
+    }
 
   const W2 = (cx, cy) => [cx + ox, cy + oy];
 

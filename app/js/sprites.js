@@ -39,14 +39,30 @@ export function hasRealSprites(species) {
   return !!manifest.species?.[species];
 }
 
+// Fehlgeschlagene URLs merken: nicht bei jedem Rendern / jedem neuen Schlüssel
+// (andere Variante, nofoot …) erneut anfragen. Gilt bis zum nächsten App-Start.
+const failedUrls = new Set();
+const imgByUrl = new Map(); // url → Promise<Image>
+
 function loadImage(url) {
-  return new Promise((res, rej) => {
+  if (failedUrls.has(url)) return Promise.reject(new Error('404 ' + url));
+  if (imgByUrl.has(url)) return imgByUrl.get(url);
+  const p = new Promise((res, rej) => {
     const img = new Image();
     img.onload = () => res(img);
-    img.onerror = () => rej(new Error('404 ' + url));
+    img.onerror = () => {
+      failedUrls.add(url);
+      imgByUrl.delete(url);
+      rej(new Error('404 ' + url));
+    };
     img.src = url;
   });
+  imgByUrl.set(url, p);
+  return p;
 }
+
+/** Nur für Tests/Diagnose: wie viele Sprite-URLs fehlgeschlagen sind. */
+export const failedSpriteUrls = () => [...failedUrls];
 
 function fileUrl(region, species, name) {
   return new URL(`${region}/${species}/${name}.png`, SPRITE_BASE).href;
@@ -87,6 +103,33 @@ function maskedGlow(img, mask) {
   return c;
 }
 
+/**
+ * Alpha-Maske eines 32×32-Sprites für das Tippen (je Art/Stufe/Variante einmal):
+ * { a: Uint8Array 0/1, w, h, ay (Fußzeile), box: {x0,y0,x1,y1} der deckenden Pixel }
+ */
+export function alphaMask(src, nofoot = false) {
+  const w = src.width || 32, h = src.height || 32;
+  const ay = nofoot ? NOFOOT_ANCHOR : 31;
+  try {
+    const ctx = makeCanvas(w, h).getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(src, 0, 0);
+    const d = ctx.getImageData(0, 0, w, h).data;
+    const a = new Uint8Array(w * h);
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        if (d[(y * w + x) * 4 + 3] < 48) continue;
+        a[y * w + x] = 1;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    return { a, w, h, ay, box: x1 >= 0 ? { x0, y0, x1, y1 } : null };
+  } catch {
+    return null; // ohne Maske: Tipp-Fläche um den Fußpunkt
+  }
+}
+
+const withMask = (s) => ({ ...s, mask: alphaMask(s.img, !!s.nofoot) });
+
 async function load(species, stage, variant, opts = {}) {
   const plant = PLANT_BY_ID[species];
   const region = plant?.region || manifest.species?.[species]?.region || 'pflanzenhandlung';
@@ -104,6 +147,8 @@ async function load(species, stage, variant, opts = {}) {
       }
       return { img, glow, placeholder: false, nofoot: f.nofoot };
     }
+    // Völlig unbekannte Art (weder Katalog noch Manifest): gar nicht erst laden
+    if (!plant) throw new Error('unbekannte Art');
     // Nicht im Manifest (evtl. veraltet): Konvention probieren
     const names = variant ? [`stage${stage}_${variant}`, `stage${stage}`] : [`stage${stage}`];
     for (const n of names) {
@@ -125,7 +170,7 @@ async function load(species, stage, variant, opts = {}) {
 export function getSprite(species, stage, variant = null, opts = {}) {
   const key = `${species}|${stage}|${variant || ''}${opts.nofoot ? '|nofoot' : ''}`;
   if (!cache.has(key)) {
-    cache.set(key, load(species, stage, variant, opts).then((s) => {
+    cache.set(key, load(species, stage, variant, opts).then(withMask).then((s) => {
       ready.set(key, s);
       return s;
     }));

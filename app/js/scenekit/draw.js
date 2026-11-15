@@ -19,7 +19,9 @@ export const C = Object.fromEntries(Object.entries(RAMPS).map(([k, v]) => [k, v.
 export const rgbRamp = (hexes) => hexes.map(hexToRgb);
 
 /** Mischung zweier RGB-Farben (t = 0..1). */
-export const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+export const mix = (a, b, t) => (a.length === 3
+  ? [Math.round(a[0] + (b[0] - a[0]) * t), Math.round(a[1] + (b[1] - a[1]) * t), Math.round(a[2] + (b[2] - a[2]) * t)]
+  : a.map((v, i) => Math.round(v + (b[i] - v) * t)));
 
 /**
  * Pixelpuffer für Hintergründe. Pixel ohne set() bleiben durchsichtig – dort
