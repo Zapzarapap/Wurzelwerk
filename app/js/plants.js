@@ -1,4 +1,4 @@
-// Pflanzenkatalog – alle 52 Arten aus docs/KONZEPT.md.
+// Pflanzenkatalog – alle 72 Arten aus docs/KONZEPT.md.
 // variants: natürliche Farben (Fallback). Vorhandene Sprite-Dateien
 // (app/data/sprites.json) haben Vorrang, siehe sprites.js.
 // kind: grobe Form für den Platzhalter, solange kein Sprite existiert.
@@ -28,6 +28,11 @@ const RAW = [
   ['bonsai', 'Bonsai', 'pflanzenhandlung', 'leaf', []],
   ['venusfliegenfalle', 'Venusfliegenfalle', 'pflanzenhandlung', 'succulent', []],
   ['orchidee', 'Orchidee', 'pflanzenhandlung', 'flower', ['weiss', 'rosa', 'lila', 'gelb']],
+  ['efeutute', 'Efeutute', 'pflanzenhandlung', 'leaf', []],
+  ['gummibaum', 'Gummibaum', 'pflanzenhandlung', 'leaf', []],
+  ['bogenhanf', 'Bogenhanf', 'pflanzenhandlung', 'leaf', []],
+  ['anthurie', 'Anthurie', 'pflanzenhandlung', 'flower', ['rot', 'rosa', 'weiss']],
+  ['philodendron_pink', 'Philodendron Pink Princess', 'pflanzenhandlung', 'leaf', []],
   // Gewächshaus
   ['tomate', 'Tomate', 'gewaechshaus', 'veg', ['rot', 'gelb']],
   ['gurke', 'Gurke', 'gewaechshaus', 'veg', []],
@@ -40,6 +45,11 @@ const RAW = [
   ['aubergine', 'Aubergine', 'gewaechshaus', 'veg', []],
   ['zucchini', 'Zucchini', 'gewaechshaus', 'veg', []],
   ['mais', 'Mais', 'gewaechshaus', 'veg', []],
+  ['karotte', 'Karotte', 'gewaechshaus', 'veg', ['orange', 'gelb', 'lila']],
+  ['salat', 'Salat', 'gewaechshaus', 'leaf', ['gruen', 'rot']],
+  ['erbsen', 'Erbsen', 'gewaechshaus', 'veg', ['weiss', 'lila']],
+  ['radieschen', 'Radieschen', 'gewaechshaus', 'veg', ['rot', 'rosa', 'lila', 'weiss']],
+  ['rosmarin', 'Rosmarin', 'gewaechshaus', 'leaf', ['hellblau', 'weiss', 'rosa']],
   // Blumenwiese
   ['gaensebluemchen', 'Gänseblümchen', 'blumenwiese', 'flower', []],
   ['mohn', 'Mohn', 'blumenwiese', 'flower', ['rot', 'orange', 'rosa', 'weiss']],
@@ -55,6 +65,11 @@ const RAW = [
   ['fingerhut', 'Fingerhut', 'blumenwiese', 'flower', ['lila', 'weiss', 'rosa']],
   ['mohnfeld', 'Mohnfeld', 'blumenwiese', 'flower', []],
   ['pusteblume', 'Pusteblume', 'blumenwiese', 'flower', []],
+  ['dahlie', 'Dahlie', 'blumenwiese', 'flower', ['rot', 'rosa', 'orange', 'gelb', 'weiss', 'lila']],
+  ['ringelblume', 'Ringelblume', 'blumenwiese', 'flower', ['orange', 'gelb']],
+  ['glockenblume', 'Glockenblume', 'blumenwiese', 'flower', ['blau', 'lila', 'weiss']],
+  ['wicke', 'Duftwicke', 'blumenwiese', 'flower', ['rosa', 'lila', 'weiss', 'rot']],
+  ['iris', 'Schwertlilie', 'blumenwiese', 'flower', ['lila', 'blau', 'gelb', 'weiss']],
   // Wald
   ['fliegenpilz', 'Fliegenpilz', 'wald', 'mushroom', []],
   ['steinpilz', 'Steinpilz', 'wald', 'mushroom', []],
@@ -69,6 +84,11 @@ const RAW = [
   ['walderdbeere', 'Walderdbeere', 'wald', 'berry', []],
   ['baerlauch', 'Bärlauch', 'wald', 'leaf', []],
   ['zunderschwamm', 'Zunderschwamm', 'wald', 'mushroom', []],
+  ['tannensetzling', 'Tannensetzling', 'wald', 'leaf', []],
+  ['waldmeister', 'Waldmeister', 'wald', 'leaf', []],
+  ['parasol', 'Parasolpilz', 'wald', 'mushroom', []],
+  ['preiselbeere', 'Preiselbeere', 'wald', 'berry', ['rosa', 'weiss']],
+  ['buschwindroeschen', 'Buschwindröschen', 'wald', 'flower', ['weiss', 'rosa']],
 ];
 
 export const PLANTS = RAW.map(([id, name, region, kind, variants]) => ({
@@ -89,5 +109,5 @@ export function plantsOfRegion(regionId) {
 
 export const VARIANT_LABELS = {
   rot: 'Rot', orange: 'Orange', rosa: 'Rosa', weiss: 'Weiß', gelb: 'Gelb',
-  blau: 'Blau', lila: 'Lila', rotbraun: 'Rotbraun', gruen: 'Grün',
+  blau: 'Blau', lila: 'Lila', rotbraun: 'Rotbraun', gruen: 'Grün', hellblau: 'Hellblau',
 };

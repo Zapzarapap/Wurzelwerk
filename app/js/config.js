@@ -50,6 +50,11 @@ export const CONFIG = {
     orchidee: 210,
     strelitzie: 240,
     bonsai: 300,
+    bogenhanf: 90,
+    efeutute: 120,
+    gummibaum: 180,
+    anthurie: 210,
+    philodendron_pink: 270,
     // Gewächshaus
     basilikum: 120,
     chili: 120,
@@ -62,6 +67,11 @@ export const CONFIG = {
     paprika: 180,
     aubergine: 180,
     mais: 210,
+    radieschen: 90,
+    salat: 90,
+    karotte: 120,
+    erbsen: 150,
+    rosmarin: 150,
     // Blumenwiese
     gaensebluemchen: 90,
     mohn: 120,
@@ -77,6 +87,11 @@ export const CONFIG = {
     tulpe: 150,
     fingerhut: 180,
     mohnfeld: 240,
+    ringelblume: 120,
+    glockenblume: 150,
+    wicke: 180,
+    iris: 210,
+    dahlie: 240,
     // Wald
     farn: 90,
     efeu: 120,
@@ -91,6 +106,11 @@ export const CONFIG = {
     maigloeckchen: 150,
     zunderschwamm: 210,
     hexenring: 300,
+    waldmeister: 90,
+    buschwindroeschen: 120,
+    preiselbeere: 150,
+    tannensetzling: 180,
+    parasol: 210,
   },
 
   // --- Sessions ------------------------------------------------------------

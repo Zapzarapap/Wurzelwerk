@@ -16,4 +16,12 @@ EXTRA = {
     "wa_baer":    ["#1c3a1e", "#2e6a2a", "#4c9a38", "#7cc44a", "#b8e070"],  # Bärlauch frisch hellgrün
     "wa_zunder":  ["#2a2420", "#4a3f36", "#6c6054", "#8e8274", "#b8ae9e"],  # Zunderschwamm grau-braun
     "wa_moos":    ["#17332a", "#25523a", "#3c7c4a", "#62a85a", "#9ad06c"],  # Moospolster
+    "wa_tanne":   ["#0c2420", "#163e30", "#225a3e", "#36784a", "#62a05c"],  # Tannennadeln dunkel blaugrün
+    "wa_zapfen":  ["#2e1a24", "#583040", "#7e4a52", "#a26a64", "#c89a86"],  # junge Tannenzapfen rötlich-violettbraun
+    "wa_meister": ["#183a20", "#285e2e", "#3e8a3c", "#66b04e", "#a2d470"],  # Waldmeister sattgrün
+    "wa_parasol": ["#3a2414", "#664226", "#94683e", "#c09a6e", "#e2cca6"],  # Parasol-Schuppen braun
+    "wa_parhut":  ["#6a5a46", "#b4a283", "#d8caae", "#ece2cc", "#f8f2e4"],  # Parasol-Hut hell beige
+    "wa_preisel": ["#0c2618", "#164026", "#225c32", "#347a3e", "#8ec27a"],  # Preiselbeer-Laub ledrig glänzend
+    "wa_preibee": ["#46080e", "#94101e", "#d8202a", "#f45040", "#ffc4b4"],  # Preiselbeeren scharlachrot
+    "wa_anemone": ["#6a5060", "#c4a6b6", "#e8dce2", "#f8f2f4", "#ffffff"],  # Buschwindröschen weiß, rosa angehaucht
 }

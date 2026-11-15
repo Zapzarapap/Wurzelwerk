@@ -28,11 +28,11 @@ test('SW-Version passt zu js/version.js', () => {
   assert.equal(v1, v2);
 });
 
-test('Pflanzenkatalog: 52 Arten, IDs eindeutig, Preise gesetzt', async () => {
+test('Pflanzenkatalog: 72 Arten, IDs eindeutig, Preise gesetzt', async () => {
   const { PLANTS, REGIONS } = await import('../js/plants.js');
   const { CONFIG } = await import('../js/config.js');
-  assert.equal(PLANTS.length, 52);
-  assert.equal(new Set(PLANTS.map((p) => p.id)).size, 52);
+  assert.equal(PLANTS.length, 72);
+  assert.equal(new Set(PLANTS.map((p) => p.id)).size, 72);
   assert.deepEqual(REGIONS.map((r) => r.id), ['pflanzenhandlung', 'gewaechshaus', 'blumenwiese', 'wald']);
   for (const p of PLANTS) assert.ok(p.id in CONFIG.plantPrices, p.id);
   const m = JSON.parse(readFileSync(join(APP, 'data/sprites.json'), 'utf8'));

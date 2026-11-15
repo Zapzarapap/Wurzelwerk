@@ -141,3 +141,11 @@ Pilze in Gruppen unter Bäumen, Lichtungen.
 - Start-Pflanzen pro Region
 - Referenzbilder für die Alocasien
 - Gesamt-Ansicht über alle Orte ja/nein
+
+
+## Bonus-Arten (v0.5.1, je 5 pro Region → 72 Arten)
+
+- Pflanzenhandlung: Efeutute, Gummibaum, Bogenhanf, Anthurie, Philodendron Pink Princess
+- Gewächshaus: Karotte, Salat, Erbsen, Radieschen, Rosmarin
+- Blumenwiese: Dahlie, Ringelblume, Glockenblume, Duftwicke, Schwertlilie
+- Wald: Tannensetzling, Waldmeister, Parasolpilz, Preiselbeere, Buschwindröschen

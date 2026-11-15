@@ -200,3 +200,4 @@ def eye(sp, x, y, rc, ysc=0.9, ramp="dark", ring=None):
             if rc - 1.0 < math.hypot(dx, dy) <= rc and (px + py) % 2 == 0:
                 r.px(px, py, LIGHT if dx + dy < 0 else BASE)
     return c
+

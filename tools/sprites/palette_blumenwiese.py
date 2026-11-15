@@ -23,4 +23,8 @@ EXTRA = {
     "bw_puff":     ["#a89a92", "#d6cec8", "#ebe6e0", "#f8f6f2", "#ffffff"],
     # Rosen-Neuaustrieb: rötlich-bronzene junge Blätter
     "bw_roseshoot": ["#4a1c1e", "#843632", "#b8543e", "#d87a54", "#f2a874"],
+    # Glockenblumen-Blauviolett (Campanula)
+    "bw_bellblue": ["#262a66", "#4450a8", "#6e7ad8", "#9aa4f0", "#ccd2fc"],
+    # Dahlienlaub: sattes, dunkles Glanzgrün mit leicht rötlichem Schatten
+    "bw_dahlialeaf": ["#1a2e1c", "#2c4a2a", "#3e6a36", "#5c8e46", "#8cb862"],
 }

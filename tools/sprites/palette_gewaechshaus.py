@@ -60,4 +60,30 @@ EXTRA = {
     "gh_corn_husk":      ["#34502a", "#62883e", "#94b65c", "#bed686", "#e2eeb4"],
     "gh_corn_silk":      ["#5a2e14", "#8e5024", "#c27a3c", "#dca462", "#f0cc90"],
     "gh_corn_tassel":    ["#66522a", "#a68a48", "#ccb068", "#e4cc8a", "#f4e6b6"],
+
+    # Karotte: fein gefiedertes Kraut, Rübe in Orange/Gelb/Lila
+    "gh_carrot_leaf":    ["#1c3c1c", "#2c6a2a", "#48983a", "#78c24e", "#b4e278"],
+    "gh_carrot":         ["#5a220c", "#ac4612", "#ea7620", "#faa444", "#fed28c"],
+    "gh_carrot_yellow":  ["#5a400c", "#b48416", "#eebc2a", "#fad85a", "#fef2a4"],
+    "gh_carrot_purple":  ["#2a0c26", "#561a48", "#82306c", "#a8508e", "#d48cbc"],
+
+    # Kopfsalat: hellgrün, Herz noch heller/gelblicher; rote Sorte für die äußeren Blätter
+    "gh_lettuce":        ["#2a481c", "#4a7c2c", "#76ae40", "#a2d460", "#d2ee96"],
+    "gh_lettuce_heart":  ["#3a5420", "#6a9634", "#9cc84c", "#c4e274", "#ecf8b8"],
+    "gh_lettuce_red":    ["#36101e", "#681e34", "#922f48", "#b8525c", "#dc8c84"],
+
+    # Erbse: bläulich-bereiftes Laub, Schoten frisch grün
+    "gh_pea":            ["#1c3a2a", "#2c5e40", "#468a58", "#72b276", "#a8d8a0"],
+    "gh_pea_pod":        ["#2a4a16", "#5a8e2a", "#86be40", "#b0de62", "#e0f6a6"],
+
+    # Radieschen
+    "gh_radish":         ["#4a0c1e", "#901a32", "#d0304a", "#ee6070", "#fca8b0"],
+    "gh_radish_pink":    ["#5a1c36", "#a4405e", "#dc7090", "#f4a0b8", "#fcd0dc"],
+    "gh_radish_purple":  ["#280c2e", "#4e1c58", "#782e84", "#a050aa", "#d08cd6"],
+    "gh_radish_white":   ["#5e5a5c", "#a8a2a2", "#dad6d2", "#f2f0ea", "#ffffff"],
+
+    # Rosmarin: graugrüne Nadeln, verholzte Zweige, hellblaue Blüten
+    "gh_rosemary":       ["#1c2e26", "#30483c", "#4e6a58", "#78967e", "#aec4aa"],
+    "gh_rosemary_wood":  ["#2e2016", "#4c3626", "#6c5038", "#8e6e50", "#b29470"],
+    "gh_petal_lightblue":["#283c6c", "#4c6eb2", "#7ca2e0", "#a8c8f2", "#dae8fc"],
 }

@@ -725,3 +725,235 @@ def corn_ear(sp: Sprite, x, y_bot, H=8, lean=1, husk="gh_corn_husk", kernel="gh_
     s.px(tip + lean, y - 1, SHADE)
     s.px(tip + 2 * lean, y - 1, BASE)
     return k
+
+
+# --- Wurzelgemüse, Salat, Erbsen, Kräuter -----------------------------------------------
+
+def feather_frond(sp: Sprite, ramp, x0, y0, x1, y1, bend=0.0, pinna=2.0, rachis="stem",
+                  start=0.45, gap=2):
+    """Fein gefiederter Wedel (Karotte): langer, nackter Blattstiel als Bogen von (x0,y0) zur
+    Spitze (x1,y1); erst ab `start` sitzen wechselständige Fiedern (alle `gap` px, Seite
+    wechselnd), die zur Spitze kleiner werden. Eine Ebene mit Outline; durch den Abstand der
+    Fiedern bleiben Lücken -> luftige, spitzenartige Silhouette."""
+    mx, my = (x0 + x1) / 2 + bend, (y0 + y1) / 2
+    pts = [(x0, y0), (mx, my), (x1, y1)]
+
+    def bez(t):
+        a = (pts[0][0] + (pts[1][0] - pts[0][0]) * t, pts[0][1] + (pts[1][1] - pts[0][1]) * t)
+        b = (pts[1][0] + (pts[2][0] - pts[1][0]) * t, pts[1][1] + (pts[2][1] - pts[1][1]) * t)
+        return a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+
+    # Stützpunkte gleichmäßig in Pixeln entlang der Kurve
+    samples = [bez(i / 200) for i in range(201)]
+    arc = [0.0]
+    for a, b in zip(samples, samples[1:]):
+        arc.append(arc[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    total = arc[-1]
+
+    def at(s):
+        for i in range(1, len(arc)):
+            if arc[i] >= s:
+                return samples[i], (samples[i][0] - samples[i - 1][0], samples[i][1] - samples[i - 1][1])
+        return samples[-1], (samples[-1][0] - samples[-2][0], samples[-1][1] - samples[-2][1])
+
+    lay = sp.layer(ramp)
+    s0 = total * start
+    side = 1 if (x1 - x0) >= 0 else -1
+    s = s0
+    while s < total - 0.5:
+        (px, py), (dx, dy) = at(s)
+        d = math.hypot(dx, dy) or 1
+        dx, dy = dx / d, dy / d
+        f = (s - s0) / max(total - s0, 1)
+        L = pinna * (1.0 - 0.6 * f)
+        for sd in ((side,) if f > 0.15 else (side, -side)):
+            nx, ny = -dy * sd, dx * sd
+            for k in range(1, int(round(L)) + 1):
+                fx = px + nx * k + dx * k * 0.7
+                fy = py + ny * k + dy * k * 0.7
+                lay.px(math.floor(fx), math.floor(fy), ("a", LIGHT if (nx + ny) < 0 else BASE))
+        side = -side
+        s += gap
+    # beblätterter Teil der Mittelrippe gehört zur Wedel-Ebene
+    s = s0
+    while s <= total:
+        (px, py), _ = at(s)
+        lay.px(math.floor(px), math.floor(py), ("a", BASE))
+        s += 0.5
+    (ex, ey), _ = at(total)
+    lay.px(math.floor(ex), math.floor(ey), ("a", LIGHT))
+    # nackter Blattstiel unten
+    r = sp.layer(rachis, outline=False, shading=False)
+    s = 0.0
+    while s < s0:
+        (px, py), _ = at(s)
+        r.px(math.floor(px), math.floor(py), BASE)
+        s += 0.5
+    return lay
+
+
+def root_shoulder(sp: Sprite, ramp, x, y_soil, w, h):
+    """Rübenkopf, der aus der Erde schaut: w px breit, h px über y_soil sichtbar,
+    oben gewölbt; (x = linke Kante). Nur der sichtbare Teil wird gezeichnet."""
+    lay = sp.layer(ramp, shading=False)
+    for j in range(h):
+        y = y_soil - j
+        inset = 1 if (j == h - 1 and w >= 3) else 0
+        for i in range(inset, w - inset):
+            tone = BASE
+            if i == inset:
+                tone = LIGHT
+            if i == w - 1 - inset:
+                tone = SHADE
+            lay.px(x + i, y, tone)
+    lay.px(x + 1, y_soil - h + 1 + (0 if w < 3 else 0), HIGHLIGHT)
+    return lay
+
+
+def ruffled_leaf(lay: Layer, cx, cy, rx, ry, ang=0.0, waves=11, amp=0.07, vein=True):
+    """Rundliches Blatt mit gewelltem, gekräuseltem Rand (Salat). ang in Grad = Richtung
+    der Blattspitze (vom Ansatz weg). Der Rand zur Spitze hin bekommt eine Kräusel-Textur
+    (abwechselnd helle und dunkle Pixel). Gibt die Pixelmenge zurück."""
+    a = math.radians(ang)
+    ca, sa = math.cos(a), math.sin(a)
+    pts = set()
+    R = int(max(rx, ry) * (1 + amp) + 2)
+    for y in range(int(cy - R), int(cy + R) + 1):
+        for x in range(int(cx - R), int(cx + R) + 1):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            u = dx * ca + dy * sa
+            v = -dx * sa + dy * ca
+            th = math.atan2(v / ry, u / rx)
+            r = math.hypot(u / rx, v / ry)
+            k = max(0.0, math.cos(th))
+            lim = 1 + amp * k * math.cos(waves * th)
+            if r <= lim:
+                pts.add((x, y))
+    # gekräuselte Silhouette: an der vorderen Kante jeden dritten Randpixel wegnehmen
+    if rx >= 2.8:
+        cut = []
+        for (x, y) in pts:
+            edge = sum((x + ex, y + ey) not in pts for ex, ey in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            if edge >= 1 and (x + y) % 3 == 0 and (dx * ca + dy * sa) > rx * 0.15:
+                cut.append((x, y))
+        for p in cut:
+            pts.discard(p)
+    for (x, y) in pts:
+        dx, dy = x + 0.5 - cx, y + 0.5 - cy
+        lit = dx + dy < -0.15 * (rx + ry)
+        lay.px(x, y, ("a", LIGHT if lit else BASE))
+    # Kräuselrand: Pixel direkt innerhalb der Kante, vordere Blatthälfte
+    for (x, y) in pts:
+        nb = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+        if all(q in pts for q in nb):
+            inner2 = all((x + ex, y + ey) in pts for ex in (-2, 2) for ey in (0,)) and \
+                all((x, y + ey) in pts for ey in (-2, 2))
+            if inner2:
+                continue
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            if dx * ca + dy * sa > rx * 0.1:
+                lay.px(x, y, SHADE if (x + 2 * y) % 3 == 0 else (HIGHLIGHT if (x + 2 * y) % 3 == 1 and dx + dy < 0 else LIGHT))
+    if vein:
+        L = int(rx * 1.5)
+        for i in range(L):
+            p = (math.floor(cx - ca * rx * 0.75 + ca * i), math.floor(cy - sa * rx * 0.75 + sa * i))
+            if p in pts and lay.pixels.get(p) not in (SHADE,):
+                lay.px(*p, LIGHT if i < L * 0.6 else ("a", BASE))
+    return pts
+
+
+def brushwood(sp: Sprite, x0, y_bot, x1, y_top, twigs=(), ramp="wood"):
+    """Reisig-Zweig als Rankhilfe: leicht schräger Hauptzweig (1 px, ohne Outline) von
+    (x0,y_bot) nach (x1,y_top), dazu kurze Seitenzweige twigs = [(t, dx, dy)] (t = Höhe
+    0..1 entlang des Zweigs, dx/dy = Länge). Links heller als rechts."""
+    s = sp.layer(ramp, outline=False, shading=False)
+    s.line(x0, y_bot, x1, y_top, BASE)
+    for y in range(y_top, y_bot + 1, 3):
+        t = (y_bot - y) / max(y_bot - y_top, 1)
+        x = round(x0 + (x1 - x0) * t)
+        s.px(x, y, LIGHT)
+    for (t, dx, dy) in twigs:
+        bx = x0 + (x1 - x0) * t
+        by = y_bot - (y_bot - y_top) * t
+        s.line(round(bx), round(by), round(bx + dx), round(by + dy), SHADE)
+    s.px(x1, y_top, LIGHT)
+    return s
+
+
+def pea_bloom(sp: Sprite, x, y, ramp="petal_white", calyx_ramp="gh_pea"):
+    """Erbsenblüte von der Seite: rundes Fähnchen oben (3 px), Schiffchen darunter,
+    kleiner grüner Kelch. (x,y) = Mitte des Fähnchens."""
+    f = sp.layer(ramp)
+    for (dx, dy, t) in ((-1, -1, LIGHT), (0, -1, HIGHLIGHT), (1, -1, BASE), (-1, 0, LIGHT),
+                        (0, 0, BASE), (1, 0, BASE), (0, 1, SHADE), (1, 1, BASE)):
+        f.px(x + dx, y + dy, t)
+    c = sp.layer(calyx_ramp, outline=False, shading=False)
+    c.px(x - 1, y + 1, BASE)
+    return f
+
+
+def pea_pod(sp: Sprite, ramp, x, y, L=6, bend=0.0, peas=True):
+    """Hängende, flache Erbsenschote: 2 px breit, unten abgerundet mit kleinem Spitzchen,
+    Erbsen als helle Wölbungen. (x,y) = linke obere Ecke, bend = seitlicher Schwung unten."""
+    lay = sp.layer(ramp, shading=False)
+    cols = []
+    for i in range(L):
+        t = i / max(L - 1, 1)
+        xx = x + round(bend * t * t)
+        cols.append((xx, y + i))
+        lay.px(xx, y + i, LIGHT)
+        lay.px(xx + 1, y + i, BASE)
+    if peas:
+        for i in range(1, L - 1, 2):
+            xx, yy = cols[i]
+            lay.px(xx, yy, HIGHLIGHT)
+            lay.px(xx + 1, yy + 1, SHADE)
+    xx, yy = cols[-1]
+    lay.erase(xx, yy)
+    lay.px(xx + 1, yy, SHADE)
+    c = sp.layer("gh_pea", outline=False, shading=False)
+    c.px(x, y - 1, BASE)
+    c.px(x + 1, y - 1, SHADE)
+    return lay
+
+
+def needle_sprig(sp: Sprite, ramp, x0, y0, x1, y1, bend=0.0, bare=0.25, dense=1.0):
+    """Nadeliger Zweig (Rosmarin) im Fischgrätmuster: dunkle Zweigachse von (x0,y0) zur
+    Spitze (x1,y1), daran schmale Nadeln (2 px), schräg nach oben, wechselständig links
+    und rechts. Ohne Outline, damit jede Nadel einzeln lesbar bleibt; Licht von links.
+    Gibt (Ebene, Liste der Achsenpunkte) zurück."""
+    mx, my = (x0 + x1) / 2 + bend, (y0 + y1) / 2
+    pts = []
+    n = int(max(abs(x1 - x0), abs(y1 - y0)) * 3) + 2
+    for i in range(n + 1):
+        t = i / n
+        a = (x0 + (mx - x0) * t, y0 + (my - y0) * t)
+        b = (mx + (x1 - mx) * t, my + (y1 - my) * t)
+        p = (math.floor(a[0] + (b[0] - a[0]) * t), math.floor(a[1] + (b[1] - a[1]) * t))
+        if not pts or pts[-1] != p:
+            pts.append(p)
+    lay = sp.layer(ramp, outline=False, shading=False)
+    L = len(pts)
+    for i, (x, y) in enumerate(pts):
+        t = i / max(L - 1, 1)
+        lay.px(x, y, OUTLINE if t < 0.85 else SHADE)
+        if t < bare:
+            continue
+        f = (t - bare) / max(1 - bare, 0.01)
+        long_ = dense >= 1.0 and 0.1 < f < 0.8
+        # wechselständig: gerade Zeilen links, ungerade rechts (+ kurze Gegen-Nadel)
+        if i % 2 == 0:
+            lay.px(x - 1, y, LIGHT)
+            if long_:
+                lay.px(x - 2, y - 1, HIGHLIGHT)
+            lay.px(x + 1, y, SHADE)
+        else:
+            lay.px(x + 1, y, BASE)
+            if long_:
+                lay.px(x + 2, y - 1, LIGHT)
+            lay.px(x - 1, y, BASE)
+    x, y = pts[-1]
+    lay.px(x, y - 1, LIGHT)
+    lay.px(x, y, BASE)
+    return lay, pts

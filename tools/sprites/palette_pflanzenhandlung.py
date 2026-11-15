@@ -61,4 +61,34 @@ EXTRA = {
 
     # Zusatztopf
     "ph_pot_slate":    ["#262c3c", "#424a60", "#626e86", "#8894ac", "#b2bcce"],
+
+    # Efeutute (Pothos): frisches Mittelgrün, gelb-cremige Panaschierung, Ranken
+    "ph_pothos":       ["#1a3a1e", "#2c6030", "#46883c", "#6eae4c", "#a6d470"],
+    "ph_pothos_var":   ["#6a6a2a", "#b0a848", "#dcd078", "#eee6a0", "#faf6d0"],
+    "ph_vine":         ["#2a4422", "#4a6a30", "#6e8e40", "#94b058", "#bcd07c"],
+
+    # Gummibaum: sehr dunkles, glänzendes Grün, helle Mittelrippe, rote Blattscheide
+    "ph_ficus":        ["#0c1e16", "#163626", "#22503a", "#3a7052", "#7cae8e"],
+    "ph_ficus_rib":    ["#4a5a3e", "#7e8a5a", "#aab47a", "#cad296", "#e6ecbc"],
+    "ph_ficus_sheath": ["#4a1420", "#86243a", "#b8404e", "#dc6c6c", "#f4a092"],
+    "ph_ficus_trunk":  ["#2e2c22", "#4c4a36", "#6a6a4c", "#8a8a64", "#acac84"],
+
+    # Bogenhanf: graugrün mit hellen Querbändern, gelber Rand
+    "ph_sans":         ["#122a1e", "#1e4430", "#2e6044", "#447a54", "#6a9a6c"],
+    "ph_sans_band":    ["#3e5e48", "#5e8264", "#86a684", "#a8c2a0", "#cadcbe"],
+    "ph_sans_rim":     ["#6a5a1a", "#b09a2e", "#dcc448", "#ecd86c", "#f8ee9e"],
+
+    # Anthurie: glänzend dunkelgrüne Blätter, cremegelber Kolben
+    "ph_anth_leaf":    ["#0e2618", "#183e26", "#245a34", "#3a7a48", "#78b07a"],
+    "ph_anth_spadix":  ["#6a5222", "#b08c3a", "#dcbe5a", "#f0da84", "#fcf0bc"],
+
+    # Philodendron Pink Princess: fast schwarzgrün, rosa Panaschierung, rötliche Stiele
+    "ph_pink_leaf":    ["#0c120e", "#16201a", "#223024", "#344632", "#506446"],
+    "ph_pink_var":     ["#6a2a44", "#b05a7a", "#e08ca8", "#f2b4c8", "#fcdce6"],
+    "ph_pink_stem":    ["#3a1a24", "#6a3040", "#94485a", "#b66a78", "#d494a0"],
+    "ph_moss_pole":    ["#2a2418", "#4a4026", "#6a5c34", "#887a48", "#a89c66"],
+
+    # Zusatztöpfe
+    "ph_pot_cream":    ["#5e5448", "#a49480", "#d2c4ac", "#e8dcc6", "#f6eee0"],
+    "ph_pot_sage":     ["#2c3a32", "#4a5e50", "#6a8270", "#8ea492", "#b6c8b4"],
 }
