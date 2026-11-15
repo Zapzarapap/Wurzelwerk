@@ -36,6 +36,9 @@ EXTRA = {
     "ph_echev":        ["#36605e", "#548a86", "#7cb0a6", "#a4d0bc", "#cfe8d6"],
     "ph_echev_l":      ["#3f726e", "#548a86", "#7cb0a6", "#a4d0bc", "#cfe8d6"],  # Blattränder innerhalb der Rosette (weicher)
     "ph_echev_pink":   ["#5e243c", "#a04260", "#d0728e", "#ec9cae", "#f8c6cc"],
+    "ph_echev_dk":     ["#2c4c4e", "#46726e", "#62948c", "#86b6a8", "#b4d8c8"],  # Außenblätter (dunkler)
+    "ph_echev_in":     ["#46786f", "#6a9e96", "#8ec0b2", "#b0d8c6", "#d8f0e2"],  # Innenblätter (heller, weiche Outline)
+    "ph_echev_pup":    ["#2c4c4e", "#6a9e96", "#8ec0b2", "#b0d8c6", "#d8f0e2"],  # Ableger: hell, dunkle Outline
 
     # Pilea: frisches, glänzendes Mittelgrün
     "ph_pilea":        ["#1a3a22", "#2c6a30", "#46983e", "#6cbc52", "#bce894"],
