@@ -1,8 +1,9 @@
 // Statistiken: Tag/Woche/Monat/Jahr, Navigation, Balken, Tag-Aufschlüsselung.
-import { h, clear, icon, segmented, confirmDialog, spriteEl, toast } from '../ui.js';
+import { h, clear, icon, segmented, spriteEl } from '../ui.js';
+import { openSessionSheet } from './sessionsheet.js';
 import * as store from '../store.js';
 import { aggregate, shiftAnchor, periodRange, tagBreakdown, totalMs, sessionMsIn } from '../stats.js';
-import { fmtDuration, fmtTime, periodLabel, fmtDate } from '../format.js';
+import { fmtDuration, fmtTime, periodLabel } from '../format.js';
 import { barChart } from '../chart.js';
 import { PLANT_BY_ID } from '../plants.js';
 import { plural, sessionDayLabel } from '../text.js';
@@ -139,30 +140,14 @@ export function mount(root) {
         const msDay = sessionMsIn(s, a, e);
         const lbl = sessionDayLabel(s, a, e, msDay, fmtTime, fmtDuration);
         const nPl = s.plantIds?.length || 0;
-        card.append(h('div', { class: 'session-row' },
+        card.append(h('button', { class: 'session-row', 'aria-label': `Session ${store.tagName(s.tagId)}, ${lbl.range}: Details, Tag ändern oder löschen`, onclick: () => openSessionSheet(s.id) },
           p ? spriteEl(p.species, p.stage, p.variant, 1) : h('span', { class: 'sprite-empty' }),
           h('div', { class: 'grow' },
             h('div', { class: 'session-tag' }, h('span', { class: 'dot', style: { background: store.tagColor(s.tagId) } }), h('span', { class: 'tname' }, store.tagName(s.tagId))),
             h('div', { class: 'muted small pname' }, lbl.range,
               lbl.part ? h('span', { class: 'part' }, ` · ${lbl.part}`) : ` · ${nPl > 1 ? nPl + '× ' : ''}${PLANT_BY_ID[s.species]?.label || ''}`)),
           h('div', { class: 'dur' + (lbl.part ? ' partial' : '') }, fmtDuration(msDay), lbl.part ? h('div', { class: 'of' }, `von ${fmtDuration(s.minutes * 60000)}`) : null),
-          h('button', {
-            class: 'icon-btn small', 'aria-label': 'Session löschen',
-            onclick: async () => {
-              const pv = store.deletePreview(s.id);
-              const tok = s.tokens || 0;
-              const tokText = tok === 0 ? ''
-                : pv.alreadySpent === 0 ? ` Die ${plural(tok, 'Token')} werden abgezogen.`
-                  : pv.lost === 0 ? ` Die ${plural(tok, 'Token')} hast du schon ausgegeben – dein Kontostand bleibt bei 0, gekaufte Pflanzen behältst du.`
-                    : ` ${plural(pv.lost, 'Token')} werden abgezogen, der Rest ist schon ausgegeben – dein Kontostand fällt auf 0, gekaufte Pflanzen behältst du.`;
-              const ok = await confirmDialog({
-                title: 'Session löschen?',
-                text: `${fmtDuration(s.minutes * 60000)} vom ${fmtDate(s.startedAt)}${nPl ? ` und ${nPl === 1 ? 'die dabei gewachsene Pflanze wird' : `die ${nPl} dabei gewachsenen Pflanzen werden`} entfernt.` : ' wird entfernt.'}${tokText}`,
-                ok: 'Löschen', danger: true,
-              });
-              if (ok) { await store.deleteSession(s.id); toast('Session gelöscht'); }
-            },
-          }, icon('trash', 14))));
+          h('span', { class: 'row-chev', 'aria-hidden': 'true' }, icon('right', 12))));
       }
       page.append(card);
     }

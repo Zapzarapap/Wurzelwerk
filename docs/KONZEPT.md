@@ -38,6 +38,13 @@ Beim Start einer Session wählt man:
 - Im Endless-Modus beginnt nach 120 min eine **2. Pflanze derselben Art** für die Zeit über 120 min, nach 240 min eine 3. usw.
 - Abbruch wird nicht bestraft: Die Pflanze erreicht die Stufe, die der gelernten Zeit entspricht.
 
+## Tag nachträglich ändern (ab v0.5.4)
+
+- **Statistik (Tagesansicht):** Antippen einer Session öffnet ein Sheet mit Details, „Tag ändern“ und „Löschen“. „Tag ändern“ zeigt die vorhandenen (nicht gelöschten) Tags als Chips, der aktuelle ist markiert; „Speichern“ ändert die Session und alle ihre Pflanzen in einer IndexedDB-Transaktion (Toast „Tag geändert“). Statistik und Orte aktualisieren sich sofort.
+- **Orte:** Die Pflanzen-Info-Karte hat den Link „Tag ändern“ für die zugehörige Session. Hat die Session mehrere Pflanzen, wechseln alle mit (Hinweis im Sheet).
+- Sessions mit gelöschtem Tag lassen sich auf einen vorhandenen Tag umstellen. Die laufende Session ist nicht betroffen.
+- Tokens, Stufe, Minuten und Stellplatz bleiben unverändert: Der Platz hängt nur an der Pflanzen-ID, nicht am Tag.
+
 ## Statistiken (Kern)
 
 - Lernzeit pro **Tag / Woche / Monat / Jahr**, aufgeschlüsselt nach Tag.

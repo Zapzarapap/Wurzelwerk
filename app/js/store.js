@@ -248,6 +248,31 @@ export async function deleteSession(id) {
   emit();
 }
 
+/**
+ * Tag einer abgeschlossenen Session nachträglich ändern (ab 0.5.4): Session und alle ihre
+ * Pflanzen (plantIds und sessionId) wechseln in einer IndexedDB-Transaktion. Tokens, Stufe,
+ * Minuten und Platz bleiben unverändert (der Platz hängt nur an der Pflanzen-ID).
+ * Zieltag muss existieren und darf nicht gelöscht sein. → { session, plantCount, changed }
+ */
+export async function retagSession(sessionId, tagId) {
+  const s = S.sessions.find((x) => x.id === sessionId);
+  if (!s) throw new Error('Diese Session gibt es nicht mehr.');
+  const t = tagById(tagId);
+  if (!t || t.deleted) throw new Error('Diesen Tag gibt es nicht mehr.');
+  const ids = new Set(s.plantIds || []);
+  const plants = S.plants.filter((p) => p.sessionId === sessionId || ids.has(p.id));
+  if (s.tagId === tagId && plants.every((p) => p.tagId === tagId)) return { session: s, plantCount: plants.length, changed: false };
+  const session = { ...s, tagId };
+  const moved = plants.map((p) => ({ ...p, tagId }));
+  const ops = [{ store: 'sessions', put: session }, ...moved.map((p) => ({ store: 'plants', put: p }))];
+  await db.write(ops);
+  S.sessions = S.sessions.map((x) => (x.id === sessionId ? session : x));
+  const byId = new Map(moved.map((p) => [p.id, p]));
+  S.plants = S.plants.map((p) => byId.get(p.id) || p);
+  emit();
+  return { session, plantCount: moved.length, changed: true };
+}
+
 // --- Backup ----------------------------------------------------------------
 export function exportData() {
   return buildExport(S);

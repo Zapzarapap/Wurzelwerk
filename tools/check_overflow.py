@@ -336,6 +336,7 @@ def run(shots):
                       const s = await import('/app/js/store.js'); const p = s.S.plants.find((x) => x.species === sid);
                       const info = document.querySelector('.plant-info'); info.replaceChildren(...plantInfoContent(p)); info.classList.remove('hidden'); }""", sid)
                     check('.plant-info', f'Orte/{reg}')
+                    check('.plant-info .link-btn', f'Orte/{reg}')
                     if w == 375 and sid in ('gluehmoos', 'philodendron_pink'):
                         page.screenshot(path=f'{shots}/ui_orte_info_{sid}_{vp}.png')
 
@@ -349,6 +350,28 @@ def run(shots):
             if w == 375:
                 page.evaluate("document.querySelector('.sessions-card').scrollIntoView()")
                 page.screenshot(path=f'{shots}/ui_statistik_sessions_{vp}.png')
+
+            # --- Session-Sheet + Tag ändern (v0.5.4): lange Tag-Namen, Tippflächen ---------
+            for sid in ('s3', 's7'):  # s3: Tag t4 (längster Name), s7: t3
+                page.evaluate("document.getElementById('sheets').replaceChildren()")
+                page.evaluate("async (sid) => (await import('/app/js/views/sessionsheet.js')).openSessionSheet(sid)", sid)
+                page.wait_for_selector('.session-detail')
+                for sel in ['.sheet', '.sd-head', '.sd-actions .btn']:
+                    check(sel, 'Session-Sheet')
+                page.evaluate("document.getElementById('sheets').replaceChildren()")
+                page.evaluate("async (sid) => { (await import('/app/js/views/sessionsheet.js')).openRetagSheet(sid); }", sid)
+                page.wait_for_selector('.retag-chips .chip')
+                for sel in ['.sheet', '.retag-chips .chip', '.retag .btn', '.retag-note']:
+                    check(sel, 'Tag-ändern-Sheet')
+                small = page.evaluate("""() => [...document.querySelectorAll('.retag .chip, .retag .btn, .session-detail .btn')]
+                  .filter((e) => e.getBoundingClientRect().height < 43.5).map((e) => e.className)""")
+                total.extend({'view': f'{vp} Tag-ändern-Sheet', 'why': f'Tippfläche < 44 px: {c}'} for c in small)
+                if w == 375 and sid == 's3':
+                    page.screenshot(path=f'{shots}/ui_tagedit_sheet_{vp}.png')
+                page.evaluate("document.getElementById('sheets').replaceChildren()")
+            small = page.evaluate("""() => [...document.querySelectorAll('.session-row')].filter((e) => e.getBoundingClientRect().height < 43.5).length""")
+            if small:
+                total.append({'view': f'{vp} Statistik', 'why': 'Session-Zeile < 44 px'})
 
             # --- Mehr: Tag-Liste ---------------------------------------------------
             page.evaluate("location.hash = '#/einstellungen'")

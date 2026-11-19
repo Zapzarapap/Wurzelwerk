@@ -122,9 +122,9 @@ test('Shop: Kachel öffnet Vorschau, Preis-Button kauft weiter direkt', () => {
   assert.match(read('css/style.css'), /\.shop-item \.btn\.price:disabled \{ pointer-events: none; \}/);
 });
 
-test('Version 0.5.3, neue Module im SW-Cache', () => {
+test('Version 0.5.x, neue Module im SW-Cache', () => {
   const sw = read('sw.js');
-  assert.match(sw, /const VERSION = '0\.5\.3'/);
-  assert.match(read('js/version.js'), /APP_VERSION = '0\.5\.3'/);
+  assert.match(sw, /const VERSION = '0\.5\.\d+'/);
+  assert.match(read('js/version.js'), /APP_VERSION = '0\.5\.\d+'/);
   for (const f of ['js/preview.js', 'js/views/plantpreview.js']) assert.ok(sw.includes(`'${f}'`), f);
 });

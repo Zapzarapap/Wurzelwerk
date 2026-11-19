@@ -8,6 +8,7 @@ import { GardenRenderer } from '../garden.js';
 import { periodRange, shiftAnchor } from '../stats.js';
 import { periodLabel, fmtDuration, fmtDate, fmtTime } from '../format.js';
 import { currentLight, todaySun } from '../clock.js';
+import { openRetagSheet } from './sessionsheet.js';
 
 /** Kurzer Name + Symbol der Lichtphase für den Chip (passt auch bei 320–390 px). */
 export function lightView(L) {
@@ -17,14 +18,16 @@ export function lightView(L) {
 }
 
 /** Inhalt der Info-Karte zu einer angetippten Pflanze (exportiert für tools/check_overflow.py). */
-export function plantInfoContent(p, { flip = false, onClose } = {}) {
+export function plantInfoContent(p, { flip = false, onClose, onRetag } = {}) {
   const sp = PLANT_BY_ID[p.species];
   return [
     spriteEl(p.species, p.stage, p.variant, 2, { flip }),
     h('div', { class: 'grow info-text' },
       h('strong', { class: 'pname' }, sp?.label || p.species, p.variant ? h('span', { class: 'muted' }, ' · ' + (VARIANT_LABELS[p.variant] || p.variant)) : null),
       h('div', { class: 'muted small' }, `Stufe ${p.stage} · ${fmtDuration(p.minutes * 60000)} · ${fmtDate(p.createdAt)}`),
-      h('div', { class: 'small info-tag' }, h('span', { class: 'dot', style: { background: store.tagColor(p.tagId) } }), h('span', { class: 'tname' }, store.tagName(p.tagId)))),
+      h('div', { class: 'small info-tag' }, h('span', { class: 'dot', style: { background: store.tagColor(p.tagId) } }), h('span', { class: 'tname' }, store.tagName(p.tagId))),
+      store.S.sessions.some((x) => x.id === p.sessionId)
+        ? h('button', { class: 'link-btn', onclick: () => (onRetag ? onRetag(p) : openRetagSheet(p.sessionId)) }, 'Tag ändern') : null),
     h('button', { class: 'icon-btn small', 'aria-label': 'Schließen', onclick: () => onClose?.() }, icon('close', 24)),
   ];
 }
