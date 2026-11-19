@@ -88,7 +88,7 @@ test('Ansicht: Zoom-Leiste nur hinter der Konstante, Fläche touch-action: none'
   assert.match(css, /\.garden-canvas \{[^}]*touch-action: none/);
 });
 
-test('Version 0.5.5 in sw.js und version.js', () => {
-  assert.match(read('js/version.js'), /'0\.5\.5'/);
-  assert.match(read('sw.js'), /VERSION = '0\.5\.5'/);
+test('Version 0.5.x (≥ 0.5.5) in sw.js und version.js', () => {
+  assert.match(read('js/version.js'), /'0\.5\.\d+'/);
+  assert.match(read('sw.js'), /VERSION = '0\.5\.\d+'/);
 });

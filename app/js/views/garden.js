@@ -54,7 +54,7 @@ export function mount(root, { navigate, params }) {
     h('button', { class: 'icon-btn', 'aria-label': 'Hineinzoomen', onclick: () => renderer.zoomBy(1.5) }, icon('plus', 12)),
     h('button', { class: 'icon-btn', 'aria-label': 'Ganzen Ort zeigen', onclick: () => renderer.fit() }, icon('fit', 12)),
   );
-  const bar = h('div', { class: 'garden-bar' }, h('div', { class: 'garden-chips' }, lightChip, countChip), tools);
+  const bar = h('div', { class: 'garden-bar' }, h('div', { class: 'garden-chips' }, countChip), tools);
   stageWrap.append(canvas, empty, info);
   page.append(head, stageWrap, bar);
   root.append(page);
