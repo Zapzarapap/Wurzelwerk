@@ -9,7 +9,7 @@
 // Alle Daten liegen in IndexedDB (auch eine laufende Session) → kein Datenverlust.
 // Ausnahme: Läuft noch eine Version vor 0.5.2 (kennt die Nachricht nicht),
 // aktiviert sich der neue SW wie früher sofort.
-const VERSION = '0.5.4';
+const VERSION = '0.5.5';
 const CACHE = 'wurzelwerk-' + VERSION;
 
 const SHELL = [

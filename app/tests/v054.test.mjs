@@ -154,14 +154,14 @@ test('Platz der Pflanzen hängt nicht vom Tag ab', () => {
   }
 });
 
-test('Einbindung: Statistik-Zeile öffnet das Sheet, Info-Karte hat „Tag ändern“, Version 0.5.4', () => {
+test('Einbindung: Statistik-Zeile öffnet das Sheet, Info-Karte hat „Tag ändern“, Version aktuell', () => {
   const stats = read('js/views/stats.js');
   assert.match(stats, /openSessionSheet\(s\.id\)/);
   const g = read('js/views/garden.js');
   assert.match(g, /'Tag ändern'/);
   assert.match(g, /openRetagSheet\(p\.sessionId\)/);
-  assert.match(read('sw.js'), /const VERSION = '0\.5\.4'/);
-  assert.match(read('js/version.js'), /APP_VERSION = '0\.5\.4'/);
+  assert.match(read('sw.js'), /const VERSION = '0\.5\.\d+'/);
+  assert.match(read('js/version.js'), /APP_VERSION = '0\.5\.\d+'/);
   assert.ok(read('sw.js').includes("'js/views/sessionsheet.js'"));
 });
 

@@ -18,6 +18,7 @@ import { prop } from './scenekit/props.js';
 import { SCENES } from './scenes/index.js';
 import { getSprite, NOFOOT_ANCHOR } from './sprites.js';
 import { makeCanvas } from './pixelart.js';
+import { CONFIG } from './config.js';
 
 // Hintergründe (LRU): Schlüssel wie bisher, aber begrenzt über die Pixelzahl
 // (Hintergrund + Leucht-Ebene), statt bei > 6 Einträgen alles zu verwerfen.
@@ -62,6 +63,8 @@ export class GardenRenderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.onTap = onTap;
+    // Pan/Zoom nur, wenn CONFIG.garden.ortZoomEnabled; sonst feste Ansicht "ganzer Ort"
+    this.zoomEnabled = !!CONFIG.garden.ortZoomEnabled;
     this.world = null;
     this.scene = null;
     this.light = null;
@@ -109,7 +112,7 @@ export class GardenRenderer {
     this.bg = background(mod, scene);
     if (this.selected) this.selected = scene.items.find((it) => it.plant.id === this.selected.plant.id) || null;
     this.compose();
-    if (sizeChanged || !this.userMoved) this.fit();
+    if (!this.zoomEnabled || sizeChanged || !this.userMoved) this.fit();
     else this.render();
   }
 
@@ -228,7 +231,7 @@ export class GardenRenderer {
       clearTimeout(this.relayoutT);
       this.relayoutT = setTimeout(() => this.setData(this.region, this.plants, this.light), 60);
     }
-    if (!this.userMoved) this.fit();
+    if (!this.zoomEnabled || !this.userMoved) this.fit();
     else {
       this.cam.ox += Math.round(w / 2 - cx);
       this.cam.oy += Math.round(h / 2 - cy);
@@ -270,6 +273,7 @@ export class GardenRenderer {
   }
 
   zoomAt(s, px, py, anchor = null) {
+    if (!this.zoomEnabled) return;
     const { min, max } = this.limits();
     s = Math.min(max, s);
     s = s <= min + 1e-6 ? min : Math.max(min, s >= 2 ? Math.round(s) : Math.round(s * 4) / 4);
@@ -284,6 +288,7 @@ export class GardenRenderer {
   }
 
   zoomBy(f) {
+    if (!this.zoomEnabled) return;
     const s = this.cam.s;
     let n = s * f >= 2 ? Math.round(s * f) : s * f;
     if (Math.abs(n - s) < 0.01) n = s + (f > 1 ? 1 : -1);
@@ -297,6 +302,7 @@ export class GardenRenderer {
 
   _bind() {
     const cv = this.canvas;
+    if (!this.zoomEnabled) return this._bindFixed();
     cv.addEventListener('pointerdown', (e) => {
       cv.setPointerCapture(e.pointerId);
       const p = this._pt(e);
@@ -363,6 +369,32 @@ export class GardenRenderer {
       const p = this._pt(e);
       this.zoomAt(this.cam.s * 2, p.x, p.y);
     });
+  }
+
+  /** Feste Ansicht: nur Tippen (kein Pan/Pinch/Rad/Doppeltipp). Mehrfinger-Berührung zählt nicht als Tippen. */
+  _bindFixed() {
+    const cv = this.canvas;
+    let start = null, multi = false;
+    cv.addEventListener('pointerdown', (e) => {
+      this.pointers.set(e.pointerId, this._pt(e));
+      if (this.pointers.size > 1) multi = true;
+      start = this.pointers.size === 1 ? { p: this._pt(e), id: e.pointerId } : null;
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, this._pt(e));
+    });
+    const up = (e) => {
+      const p = this._pt(e);
+      this.pointers.delete(e.pointerId);
+      const ok = start && start.id === e.pointerId && !multi && e.type === 'pointerup'
+        && Math.hypot(p.x - start.p.x, p.y - start.p.y) <= 10 * this.dpr;
+      if (this.pointers.size === 0) { multi = false; start = null; }
+      if (ok) this._tap(p);
+    };
+    cv.addEventListener('pointerup', up);
+    cv.addEventListener('pointercancel', up);
+    // iOS-Safari-Pinch/Doppeltipp-Zoom der Seite über der Fläche verhindern
+    for (const t of ['gesturestart', 'gesturechange']) cv.addEventListener(t, (e) => e.preventDefault());
   }
 
   _tap(p) {

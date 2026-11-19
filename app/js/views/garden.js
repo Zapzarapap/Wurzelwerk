@@ -48,7 +48,8 @@ export function mount(root, { navigate, params }) {
   const countChip = h('div', { class: 'count-chip' });
   const empty = h('div', { class: 'garden-empty hidden' });
   // Steuerleiste unter der Fläche: verdeckt nichts von der Region
-  const tools = h('div', { class: 'garden-tools' },
+  // (nur bei CONFIG.garden.ortZoomEnabled; sonst feste Ansicht ohne Zoom-Knöpfe)
+  const tools = !CONFIG.garden.ortZoomEnabled ? null : h('div', { class: 'garden-tools' },
     h('button', { class: 'icon-btn', 'aria-label': 'Herauszoomen', onclick: () => renderer.zoomBy(1 / 1.5) }, icon('minus', 12)),
     h('button', { class: 'icon-btn', 'aria-label': 'Hineinzoomen', onclick: () => renderer.zoomBy(1.5) }, icon('plus', 12)),
     h('button', { class: 'icon-btn', 'aria-label': 'Ganzen Ort zeigen', onclick: () => renderer.fit() }, icon('fit', 12)),

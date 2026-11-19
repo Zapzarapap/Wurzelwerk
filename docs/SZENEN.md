@@ -19,7 +19,7 @@ migrierte v0.4-Stände und dürfen frei umgebaut werden.
 | `scenekit/props.js` | gemeinsame Requisiten: `prop(name, v)` (Bücher, Gießkanne, Sack, Kiste, Kerze, Tasse, Katze …) | nein (nur gemeinsam) |
 | `scenekit/light.js` | Himmel, Grading, Innenraumlicht, Lichthöfe, Strahlen | nein |
 | `scenekit/rng.js` | `rng(key)`, `rngFor(id)`, `noise(x,y,seed)`, `pick`, `weighted`, `int` | nein |
-| `garden.js` | generischer Renderer (Ebenen, Kamera, Tippen) | nein |
+| `garden.js` | generischer Renderer (Ebenen, feste Kamera „ganzer Ort“, Tippen; Pan/Zoom nur mit `CONFIG.garden.ortZoomEnabled`) | nein |
 | `palette.js` | Rampen (Spiegel von `tools/sprites/palette.py`) | nein – eigene Rampen lokal definieren (s. u.) |
 
 Eigene Pixel-Assets (PNG), falls nötig: `app/scenes-assets/<region>/` oder `art/scenes/<region>/`
@@ -185,6 +185,6 @@ Innenraum-Zonen mit `indoorMult(L)`. Leuchtendes (Glow-Ebenen, `Buf.glow`, `halo
 
 - Tests: `node --test app/tests/*.test.mjs` (u. a. `app/tests/scenes.test.mjs`: Stabilität,
   Determinismus, Tipp-Regel, Deko-Regeln, Rendern aller Teile mit Canvas-Attrappe).
-- Screenshots: `python3 /home/claude/rework_tools/shots.py REGION ANZAHL ZEIT AUS.png [--canvas] [--zoom N] [--tap]`
+- Screenshots: `python3 /home/claude/rework_tools/shots.py REGION ANZAHL ZEIT AUS.png [--canvas] [--zoom N, nur mit ortZoomEnabled] [--tap]`
   oder `--batch REGION 0,8,60,300 12:00,22:30 PREFIX`. Meldet JS-Fehler.
 - Spielstände: Mit v0.5 werden bestehende Pflanzen einmalig neu verteilt (neue Spots), danach stabil.

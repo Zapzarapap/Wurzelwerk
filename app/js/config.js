@@ -127,6 +127,7 @@ export const CONFIG = {
 
   // --- Garten --------------------------------------------------------------
   garden: {
+    ortZoomEnabled: false, // false: feste Ansicht (ganzer Ort passt immer), kein Pan/Zoom/Zoom-Buttons; true: wie bis v0.5.4
     minDist: 18, // Mindestabstand der Pflanzen (Welt-Pixel)
     areaPerPlant: 820, // Welt-Pixel² pro Pflanze, bestimmt das Flächenwachstum
     baseWidth: 128, // kleinste Gartenbreite (Welt-Pixel)
